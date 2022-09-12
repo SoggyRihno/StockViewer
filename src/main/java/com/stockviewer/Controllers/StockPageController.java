@@ -80,13 +80,16 @@ public class StockPageController {
                             .sorted(DataPoint::compareTo)
                             .toList();
 
-                    symbolLabel.setText(StockViewer.getSymbol().toUpperCase());
-                    openLabel.setText(String.valueOf(latestData.get(latestData.size() - 1).getOpen()));
-                    volumeLabel.setText(String.valueOf(latestData.stream().mapToInt(DataPoint::getVolume).sum()));
-                    dateLabel.setText(latestData.get(latestData.size() - 1).getLocalDateTime().format(DataPoint.dateFormatter));
-                    double difference = latestData.get(latestData.size() - 1).getOpen() - latestData.get(latestData.size() - 2).getOpen();
-                    String change = String.format("%s (%.2f %%)", difference >= 0 ? String.format("+ %,.2f", difference) : String.format("%,.2f", difference), (difference / latestData.get(latestData.size() - 2).getOpen()) * 100);
-                    changeLabel.setText(change);
+                    if (latestData.size() > 1) {
+                        symbolLabel.setText(StockViewer.getSymbol().toUpperCase());
+                        openLabel.setText(String.valueOf(latestData.get(latestData.size() - 1).getOpen()));
+                        volumeLabel.setText(String.valueOf(latestData.stream().mapToInt(DataPoint::getVolume).sum()));
+                        dateLabel.setText(latestData.get(latestData.size() - 1).getLocalDateTime().format(DataPoint.dateFormatter));
+                        double difference = latestData.get(latestData.size() - 1).getOpen() - latestData.get(latestData.size() - 2).getOpen();
+                        String change = String.format("%s (%.2f %%)", difference >= 0 ? String.format("+ %,.2f", difference) : String.format("%,.2f", difference), (difference / latestData.get(latestData.size() - 2).getOpen()) * 100);
+                        changeLabel.setText(change);
+                    }
+
                 }
             }
 
