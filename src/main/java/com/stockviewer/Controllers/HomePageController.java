@@ -15,37 +15,26 @@ import java.io.IOException;
 public class HomePageController {
     @FXML
     private MenuItem copeMenuItem;
-
     @FXML
     private Menu fileMenu;
-
     @FXML
     private ImageView graphImageView;
-
     @FXML
     private Menu helpMenu;
-
     @FXML
     private MenuItem importMenuItem;
-
     @FXML
     private MenuBar mainMenuBar;
-
     @FXML
     private ListView<String> portfolioList;
-
     @FXML
     private MenuItem resetMenuItem;
-
     @FXML
     private Button searchButton;
-
     @FXML
     private TextField searchTextField;
-
     @FXML
     private MenuItem settingsMenuItem;
-
 
     @FXML
     public void initialize() {
@@ -60,9 +49,8 @@ public class HomePageController {
             Stage stage = (Stage) searchButton.getScene().getWindow();
             Scene scene = new Scene(loader.load());
             stage.setScene(scene);
-        } catch (IOException io) {
-            io.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
-
 }

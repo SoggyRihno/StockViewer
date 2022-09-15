@@ -1,11 +1,10 @@
 package com.stockviewer.Data;
 
 import com.google.gson.JsonObject;
-
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
-public class DataPoint implements  Comparable<DataPoint>{
+public class StockDataPoint implements  Comparable<StockDataPoint>{
     public static final DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
     private final String timeStamp;
     private final double open;
@@ -14,7 +13,7 @@ public class DataPoint implements  Comparable<DataPoint>{
     private final double close;
     private final int volume;
 
-    public DataPoint(String timeStamp, JsonObject json) {
+    public StockDataPoint(String timeStamp, JsonObject json) {
         this.timeStamp = timeStamp;
         this.open = json.keySet().contains("1. open") ? json.get("1. open").getAsDouble() : 0;
         this.high = json.keySet().contains("2. high") ? json.get("2. high").getAsDouble() : 0;
@@ -48,7 +47,7 @@ public class DataPoint implements  Comparable<DataPoint>{
     }
 
     @Override
-    public int compareTo(DataPoint dataPoint) {
-        return getLocalDateTime().compareTo(dataPoint.getLocalDateTime());
+    public int compareTo(StockDataPoint stockDataPoint) {
+        return getLocalDateTime().compareTo(stockDataPoint.getLocalDateTime());
     }
 }

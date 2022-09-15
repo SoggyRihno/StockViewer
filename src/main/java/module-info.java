@@ -13,6 +13,7 @@ module com.stockviewer.stockviewer {
     exports com.stockviewer.Controllers;
     exports com.stockviewer;
     exports com.stockviewer.Data;
+    exports com.stockviewer.Exceptions;
     opens com.stockviewer to javafx.fxml;
     opens com.stockviewer.Controllers to javafx.fxml;
 
