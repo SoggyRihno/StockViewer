@@ -1,6 +1,6 @@
 package com.stockviewer.Data;
 
-public enum Interval {
+public enum APIInterval {
     ONE_MINUTE("1min" , 1000),
     FIVE_MINUTES("5min",5000),
     FIFTEEN_MINUTES("15min",15000),
@@ -9,7 +9,7 @@ public enum Interval {
 
     private final String API_VAlUE;
     private final int TIME_IN_MIlI;
-    Interval(String apiValue,int timeInMil){
+    APIInterval(String apiValue, int timeInMil){
         API_VAlUE = apiValue;
         TIME_IN_MIlI = timeInMil;
     }

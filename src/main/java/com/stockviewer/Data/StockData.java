@@ -21,7 +21,7 @@ public class StockData {
 
     public static StockData newStockData(String symbol) throws APIException {
         try {
-            String raw = DataManager.getStockData(StockViewer.getSymbol(), Interval.FIVE_MINUTES).get();
+            String raw = DataManager.getStockData(StockViewer.getSymbol(), APIInterval.FIVE_MINUTES).get();
             JsonObject json = JsonParser.parseString(raw).getAsJsonObject();
             String series = json.keySet().stream().filter(i -> i.matches(timeSeriesRegex)).findFirst().orElse("");
             JsonObject data = json.get(series).getAsJsonObject();

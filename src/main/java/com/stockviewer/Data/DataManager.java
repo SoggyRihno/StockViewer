@@ -32,7 +32,9 @@ public class DataManager {
 
 
     static {
-        ses.scheduleWithFixedDelay(() -> {if (queue.size() > 0) ses.submit(queue.remove(1));}, 0, 12, TimeUnit.SECONDS);
+        ses.scheduleWithFixedDelay(() -> {
+            if (queue.size() > 0) ses.submit(queue.remove(1));
+        }, 0, 12, TimeUnit.SECONDS);
         ses.scheduleWithFixedDelay(DataManager::saveJson, 5, 5, TimeUnit.MINUTES);
         ses.scheduleWithFixedDelay(DataManager::cleanCache, 5, 5, TimeUnit.MINUTES);
         File dataFile = new File("src/main/resources/com/stockviewer/Data/data.json");
@@ -73,12 +75,12 @@ public class DataManager {
         }
     }
 
-    public static CompletableFuture<String> getStockData(String symbol, Interval interval) {
+    public static CompletableFuture<String> getStockData(String symbol, APIInterval APIInterval) {
         CompletableFuture<String> result = new CompletableFuture<>();
         if (cache.containsKey(symbol))
             result.complete(cache.get(symbol));
         else {
-            Runnable task =() -> result.completeAsync(() -> cacheData(symbol, getSync(String.format(urlFormatString, symbol, interval, hardCodedAPIKeyBcStupid))));
+            Runnable task = () -> result.completeAsync(() -> cacheData(symbol, getSync(String.format(urlFormatString, symbol, APIInterval, hardCodedAPIKeyBcStupid))));
             if (queue.size() >= 1)
                 queue.add(task);
             else
