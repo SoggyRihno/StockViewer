@@ -8,6 +8,8 @@ import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
+import javafx.scene.chart.LineChart;
+import javafx.scene.chart.NumberAxis;
 import javafx.scene.control.*;
 import javafx.scene.image.ImageView;
 import javafx.stage.Popup;
@@ -51,6 +53,16 @@ public class StockPageController {
     void initialize() {
         Platform.runLater(()->{try {update();} catch (APIException ignored) {badSymbol();}});
         ses.scheduleWithFixedDelay(()->Platform.runLater(()->{try {update();} catch (APIException ignored) {}}),1,1, TimeUnit.MINUTES);
+
+        NumberAxis xAxis = new NumberAxis();
+        NumberAxis yAxis = new NumberAxis();
+
+        xAxis.setLabel("X axis");
+        yAxis.setLabel("Y axis");
+
+
+        LineChart<Integer,Integer> lineChart = new LineChart(xAxis,yAxis);
+
     }
 
     void update() throws APIException {
@@ -60,6 +72,7 @@ public class StockPageController {
         openLabel.setText(String.valueOf(data.getLatestOpen()));
         volumeLabel.setText(String.valueOf(data.getDailyVolume(date)));
         changeLabel.setText(data.getLatestChange());
+        changeLabel.setStyle(changeLabel.getText().contains("-") ? "-fx-text-fill: red" : "-fx-text-fill: green");
         symbolLabel.setText(symbol);
         dateLabel.setText(data.getLatestTimeFormatted());
     }

@@ -1,11 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import javafx.scene.chart.CategoryAxis?>
+<?import javafx.scene.chart.LineChart?>
+<?import javafx.scene.chart.NumberAxis?>
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.ChoiceBox?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.Separator?>
 <?import javafx.scene.control.ToolBar?>
-<?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
@@ -43,16 +45,22 @@
             <HBox prefHeight="100.0" prefWidth="200.0">
                 <VBox alignment="CENTER" prefHeight="200.0" prefWidth="100.0" HBox.hgrow="ALWAYS">
                     <ChoiceBox fx:id="graphChoiceBox" prefWidth="150.0" />
-                    <ImageView fx:id="GraphImage" fitHeight="226.0" fitWidth="357.0" pickOnBounds="true" preserveRatio="true" />
+               <LineChart fx:id="LineChart">
+                 <xAxis>
+                   <CategoryAxis side="BOTTOM" />
+                 </xAxis>
+                 <yAxis>
+                   <NumberAxis side="LEFT" />
+                 </yAxis>
+               </LineChart>
                 </VBox>
                 <VBox alignment="CENTER" prefHeight="251.0" prefWidth="152.0">
                    <VBox alignment="CENTER" prefHeight="110.0" prefWidth="144.0">
                        <HBox alignment="CENTER" prefHeight="100.0" prefWidth="200.0">
-                           <Button fx:id="BuyButton" mnemonicParsing="false" onAction="#buyAction" text="Buy"/>
+                           <Button fx:id="BuyButton" mnemonicParsing="false" onAction="#buyAction" text="Buy" />
                        </HBox>
                        <HBox alignment="CENTER" prefHeight="100.0" prefWidth="200.0">
-                           <Button fx:id="sellButton" mnemonicParsing="false" onAction="#sellAction" prefHeight="25.0"
-                                   prefWidth="42.0" text="Sell"/>
+                           <Button fx:id="sellButton" mnemonicParsing="false" onAction="#sellAction" prefHeight="25.0" prefWidth="42.0" text="Sell" />
                        </HBox>
                    </VBox>
                     <HBox alignment="CENTER" prefHeight="51.0" prefWidth="152.0" VBox.vgrow="NEVER">

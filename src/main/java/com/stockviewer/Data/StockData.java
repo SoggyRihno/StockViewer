@@ -36,23 +36,11 @@ public class StockData {
         }
     }
 
-
-    //idk what this is for
-    @Deprecated
-    protected void update() {
-        try {
-            StockData test = newStockData(this.symbol);
-            if (test.getLatestTimeFormatted().equalsIgnoreCase(getLatestTimeFormatted()))
-                this.data = test.getData();
-        } catch (APIException ignored) {
-        }
-    }
-
-    public synchronized long getTimeStamp(){
+    public long getTimeStamp(){
         return timeStamp;
     }
 
-    public synchronized String getSymbol() {
+    public String getSymbol() {
         return symbol;
     }
 
@@ -60,26 +48,25 @@ public class StockData {
         return data;
     }
 
-    public synchronized double getLatestOpen() {
+    public double getLatestOpen() {
         return data.get(data.size() - 1).getOpen();
     }
 
-    public synchronized int getDailyVolume(LocalDateTime date) {
+    public int getDailyVolume(LocalDateTime date) {
         return data.stream()
                 .filter(i -> i.getLocalDateTime().getDayOfMonth() == date.getDayOfMonth())
                 .mapToInt(StockDataPoint::getVolume)
                 .sum();
     }
 
-    public synchronized String getLatestTimeFormatted() {
+    public String getLatestTimeFormatted() {
         return data.size() > 0 ? data.get(data.size() - 1).getLocalDateTime().format(StockDataPoint.dateFormatter) : "\\_(.-.)_/";
     }
 
-    public synchronized String getLatestChange() {
+    public String getLatestChange() {
         double difference = data.get(data.size() - 1).getOpen() - data.get(data.size() - 2).getOpen();
         return String.format("%s (%.2f %%)",
                 difference >= 0 ? String.format("+ %,.2f", difference) : String.format("%,.2f", difference),
                 difference / data.get(data.size() - 2).getOpen() * 100);
     }
-
 }
