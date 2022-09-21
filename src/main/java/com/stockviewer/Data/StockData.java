@@ -6,13 +6,15 @@ import com.stockviewer.Exceptions.APIException;
 import com.stockviewer.StockViewer;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 public class StockData {
     private final long timeStamp = System.currentTimeMillis();
     private final String symbol;
-    private List<StockDataPoint> data;
+    private final List<StockDataPoint> data;
     private static final String timeSeriesRegex = "(Time\\sSeries\\s\\()(5|15|30|60)(min\\))";
+    private static final List<String> badSymbols = new ArrayList<>();
 
     private StockData(String symbol, List<StockDataPoint> data) {
         this.symbol = symbol;
@@ -20,6 +22,7 @@ public class StockData {
     }
 
     public static StockData newStockData(String symbol) throws APIException {
+        if(badSymbols.contains(symbol)) throw new APIException();
         try {
             String raw = DataManager.getStockData(StockViewer.getSymbol(), APIInterval.FIVE_MINUTES).get();
             JsonObject json = JsonParser.parseString(raw).getAsJsonObject();
@@ -32,6 +35,7 @@ public class StockData {
                     .sorted(StockDataPoint::compareTo)
                     .toList());
         } catch (Exception e) {
+            badSymbols.add(symbol);
             throw new APIException();
         }
     }

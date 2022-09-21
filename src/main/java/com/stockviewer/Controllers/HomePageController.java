@@ -9,8 +9,11 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.image.ImageView;
+import javafx.scene.input.KeyCode;
 import javafx.stage.Stage;
+
 import java.io.IOException;
+import java.util.Objects;
 
 public class HomePageController {
     @FXML
@@ -39,10 +42,18 @@ public class HomePageController {
     @FXML
     public void initialize() {
         DataManager.getActive().stream().map(Order::toString).forEach(i -> portfolioList.getItems().add(i));
+        searchTextField.setOnKeyPressed(keyEvent -> {if (keyEvent.getCode().equals(KeyCode.ENTER)) search();
+        });
+
     }
 
     @FXML
     void SearchAction(ActionEvent event) {
+        search();
+    }
+
+    void search() {
+        if (Objects.equals(searchButton.getText(), "")) return;
         try {
             FXMLLoader loader = new FXMLLoader(StockViewer.class.getResource("XML/StockPage.fxml"));
             StockViewer.setSymbol(searchTextField.getText());
