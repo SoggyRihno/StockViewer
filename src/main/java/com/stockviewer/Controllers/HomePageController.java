@@ -44,7 +44,6 @@ public class HomePageController {
         DataManager.getActive().stream().map(Order::toString).forEach(i -> portfolioList.getItems().add(i));
         searchTextField.setOnKeyPressed(keyEvent -> {if (keyEvent.getCode().equals(KeyCode.ENTER)) search();
         });
-
     }
 
     @FXML
@@ -56,7 +55,7 @@ public class HomePageController {
         if (Objects.equals(searchButton.getText(), "")) return;
         try {
             FXMLLoader loader = new FXMLLoader(StockViewer.class.getResource("XML/StockPage.fxml"));
-            StockViewer.setSymbol(searchTextField.getText());
+            loader.setController(new StockPageController(searchTextField.getText()));
             Stage stage = (Stage) searchButton.getScene().getWindow();
             Scene scene = new Scene(loader.load());
             stage.setScene(scene);

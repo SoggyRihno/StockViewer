@@ -1,9 +1,10 @@
-package com.stockviewer.Data;
+package com.stockviewer.Data.APIWrappers;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import com.stockviewer.Exceptions.APIException;
-import com.stockviewer.StockViewer;
+import com.stockviewer.Data.APIInterval;
+import com.stockviewer.Data.DataManager;
+import com.stockviewer.Exceptions.API.APIException;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -24,7 +25,7 @@ public class StockData {
     public static StockData newStockData(String symbol) throws APIException {
         if(badSymbols.contains(symbol)) throw new APIException();
         try {
-            String raw = DataManager.getStockData(StockViewer.getSymbol(), APIInterval.FIVE_MINUTES).get();
+            String raw = DataManager.getStockData(symbol, APIInterval.FIVE_MINUTES).get();
             JsonObject json = JsonParser.parseString(raw).getAsJsonObject();
             String series = json.keySet().stream().filter(i -> i.matches(timeSeriesRegex)).findFirst().orElse("");
             JsonObject data = json.get(series).getAsJsonObject();

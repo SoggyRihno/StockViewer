@@ -1,4 +1,4 @@
-package com.stockviewer.Data;
+package com.stockviewer.Data.APIWrappers;
 
 import com.google.gson.JsonObject;
 import java.time.LocalDateTime;

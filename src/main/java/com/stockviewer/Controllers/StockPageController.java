@@ -1,18 +1,16 @@
 package com.stockviewer.Controllers;
 
-import com.stockviewer.Data.StockData;
-import com.stockviewer.Exceptions.APIException;
+import com.stockviewer.Data.DataManager;
+import com.stockviewer.Data.APIWrappers.StockData;
+import com.stockviewer.Exceptions.API.APIException;
 import com.stockviewer.StockViewer;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
-import javafx.scene.chart.LineChart;
-import javafx.scene.chart.NumberAxis;
 import javafx.scene.control.*;
 import javafx.scene.image.ImageView;
-import javafx.stage.Popup;
 import javafx.stage.Stage;
 
 import java.io.IOException;
@@ -24,7 +22,7 @@ import java.util.concurrent.TimeUnit;
 public class StockPageController {
     private final ScheduledExecutorService ses = Executors.newSingleThreadScheduledExecutor();
     private final String symbol;
-
+    private StockData currentData;
     @FXML
     private Button BuyButton;
     @FXML
@@ -45,53 +43,43 @@ public class StockPageController {
     private Label symbolLabel;
     @FXML
     private Label volumeLabel;
+    @FXML
+    private TextField AmountField;
 
-    public StockPageController() {
-        this.symbol = StockViewer.getSymbol();
+    public StockPageController(String symbol) {
+        this.symbol = symbol;
     }
     @FXML
     void initialize() {
+        backButton.setOnAction(actionEvent -> back());
         Platform.runLater(()->{try {update();} catch (APIException ignored) {badSymbol();}});
         ses.scheduleWithFixedDelay(()->Platform.runLater(()->{try {update();} catch (APIException ignored) {}}),1,1, TimeUnit.MINUTES);
-
-        NumberAxis xAxis = new NumberAxis();
-        NumberAxis yAxis = new NumberAxis();
-
-        xAxis.setLabel("X axis");
-        yAxis.setLabel("Y axis");
-
-
-        LineChart<Integer,Integer> lineChart = new LineChart(xAxis,yAxis);
 
     }
 
     void update() throws APIException {
         LocalDateTime date = LocalDateTime.now().minusDays(1);
-
-        StockData data = StockData.newStockData(symbol);
-        openLabel.setText(String.valueOf(data.getLatestOpen()));
-        volumeLabel.setText(String.valueOf(data.getDailyVolume(date)));
-        changeLabel.setText(data.getLatestChange());
+        currentData = StockData.newStockData(symbol);
+        openLabel.setText(String.valueOf(currentData.getLatestOpen()));
+        volumeLabel.setText(String.valueOf(currentData.getDailyVolume(date)));
+        changeLabel.setText(currentData.getLatestChange());
         changeLabel.setStyle(changeLabel.getText().contains("-") ? "-fx-text-fill: red" : "-fx-text-fill: green");
         symbolLabel.setText(symbol);
-        dateLabel.setText(data.getLatestTimeFormatted());
+        dateLabel.setText(currentData.getLatestTimeFormatted());
+        AmountField.textProperty().addListener((observable, oldValue, newValue) -> {
+            if (!newValue.matches("\\d*")) {
+                AmountField.setText(newValue.replaceAll("[^\\d]", ""));
+            }
+        });
     }
     @FXML
-    void backButtonAction(ActionEvent event) {
-        back();
-    }
-    @FXML
-    void buyAction(ActionEvent event) {
-        Popup popup = new Popup();
-        popup.getContent().add(new TextField("test"));
-        popup.show(BuyButton.getScene().getWindow());
-
+    void buyAction(ActionEvent event) throws APIException {
+        update();
+        if(!AmountField.getText().isEmpty())
+            DataManager.buy(Integer.parseInt(AmountField.getText()),currentData.getLatestOpen(),symbol);
     }
     @FXML
     void sellAction(ActionEvent event) {}
-    public void backAction(ActionEvent actionEvent) {
-        back();
-    }
     public void back() {
         ses.shutdown();
         try {
@@ -100,7 +88,7 @@ public class StockPageController {
             Scene scene = new Scene(loader.load());
             stage.setScene(scene);
         } catch (IOException e) {
-            throw new RuntimeException(":(");
+            e.printStackTrace();
         }
     }
 

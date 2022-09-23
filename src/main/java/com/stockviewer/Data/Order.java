@@ -59,4 +59,9 @@ public class Order {
     public UUID getUuid() {
         return uuid;
     }
+
+    @Override
+    public String toString() {
+        return symbol.toUpperCase() + "\t" + amount * buyPrice + "\t" + buyDate;
+    }
 }

@@ -8,9 +8,6 @@ import javafx.stage.Stage;
 import java.io.IOException;
 
 public class StockViewer extends Application {
-    //this is the stupid
-    private static String Symbol = "";
-
 
     @Override
     public void start(Stage stage) throws IOException {
@@ -24,14 +21,4 @@ public class StockViewer extends Application {
     public static void main(String[] args) {
         launch();
     }
-
-    public static void setSymbol(String symbol){
-        Symbol = symbol;
-    }
-
-    public static String getSymbol(){
-        return Symbol;
-    }
-
-
 }
