@@ -2,6 +2,10 @@ package com.stockviewer.Data;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.stockviewer.Exceptions.Poor.InsufficientFundsException;
+import com.stockviewer.Exceptions.Poor.NoStockException;
+import com.stockviewer.Exceptions.Poor.PoorException;
+
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -20,19 +24,18 @@ import java.util.stream.Collectors;
 public class DataManager {
     private static final ScheduledExecutorService ses = Executors.newScheduledThreadPool(3);
     public static List<Order> orders = new ArrayList<>();
-    //48PVUTGUNVYAYHA2
     private static String API_KEY = "48PVUTGUNVYAYHA2";
     private static final String urlFormatString = "https://www.alphavantage.co/query?function=TIME_SERIES_INTRADAY&symbol=%s&interval=%s&apikey=%s&datatype=json";
-
     private static final List<Runnable> queue = new ArrayList<>();
     private static Map<String, String> cache = new HashMap<>();
-
     public static double initial = 100000;
 
     static {
-        ses.scheduleWithFixedDelay(() -> {if (queue.size() > 0) ses.submit(queue.remove(1));}, 0, 12, TimeUnit.SECONDS);
+        ses.scheduleWithFixedDelay(() -> {
+            if (queue.size() > 0) ses.submit(queue.remove(1));
+        }, 0, 12, TimeUnit.SECONDS);
         ses.scheduleWithFixedDelay(DataManager::saveJson, 5, 5, TimeUnit.MINUTES);
-        ses.scheduleWithFixedDelay(DataManager::cleanCache, 5, 5, TimeUnit.MINUTES);
+        ses.scheduleWithFixedDelay(DataManager::cleanCache, 1, 1, TimeUnit.MINUTES);
         loadJson();
     }
 
@@ -41,8 +44,8 @@ public class DataManager {
             FileWriter fw = new FileWriter("src/main/resources/com/stockviewer/Data/data.json");
             Gson gson = new GsonBuilder().setPrettyPrinting().create();
             Map<String, Object> root = new HashMap<>();
-            root.put("current", orders);
             root.put("API_KEY", API_KEY);
+            root.put("current", orders);
             gson.toJson(root, fw);
             fw.close();
         } catch (IOException e) {
@@ -50,7 +53,7 @@ public class DataManager {
         }
     }
 
-    public static void loadJson(){
+    public static void loadJson() {
         File dataFile = new File("src/main/resources/com/stockviewer/Data/data.json");
         try {
             if (!dataFile.exists())
@@ -61,18 +64,17 @@ public class DataManager {
             Reader reader = Files.newBufferedReader(dataFile.toPath());
             Map<String, Object> map = gson.fromJson(reader, Map.class);
             orders = (List<Order>) map.getOrDefault("orders", new ArrayList<>());
-            API_KEY = (String) map.getOrDefault("API_KEY","default");
+            API_KEY = (String) map.getOrDefault("API_KEY", "default");
         } catch (IOException e) {
             e.printStackTrace();
             throw new RuntimeException("could not load data :(");
         }
     }
 
-
-
-
-
-
+    public static void stop() {
+        saveJson();
+        ses.shutdown();
+    }
 
     private static String getSync(String url) {
         HttpClient client = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(10)).build();
@@ -109,21 +111,52 @@ public class DataManager {
     }
 
     public static double calculateCurrent() {
-        return initial + orders.stream().mapToDouble(i -> i.getBuyPrice() * i.getAmount() * (i.isSold() ? 1 : -1)).sum();
+        return initial + orders.stream().mapToDouble(i -> i.getBuyPrice() * i.getAmount() * (i instanceof SellOrder ? -1 : 1)).sum();
     }
 
-    public static boolean buy(int amount, double buyPrice, String symbol) {
+    public static Map<String, Integer> getOwned(){
+        Map<String, Integer> map = new HashMap<>();
+        orders.stream()
+                .map(Order::getSymbol)
+                .forEach(i->{
+                    map.compute(i,(k,v)->{
+                        v = map.getOrDefault(i,0)+1;
+                        return v;
+                    });
+                });
+        return map;
+    }
+
+    public static void buy(int amount, double buyPrice, String symbol) throws InsufficientFundsException{
         if (amount * buyPrice > calculateCurrent())
-            return false;
-        return orders.add(new Order(amount, buyPrice, symbol));
+            throw new InsufficientFundsException();
+        orders.add(new Order(amount, buyPrice, symbol));
     }
 
-    //TODO
-    public static boolean sell(UUID uuid) {
-        return false;
+
+    public static void sell(UUID uuid, double price) throws PoorException {
+        Order order = orders.stream()
+                .filter(i->i.getUuid().equals(uuid))
+                .filter(i->! (i instanceof SellOrder))
+                .findFirst()
+                .orElse(null);
+        if(order !=null)
+            sell(order.getAmount(),order.getBuyPrice(),order.getSymbol());
+
+
+    }
+    public static void sell(int amount, double buyPrice, String symbol) throws PoorException {
+        int ownedAmount = getOwned().getOrDefault(symbol,0);
+        if ( ownedAmount>= amount)
+            if(amount * buyPrice<= calculateCurrent())
+                orders.add(new SellOrder(amount, buyPrice, symbol));
+            else
+                throw new InsufficientFundsException();
+        else
+            throw new NoStockException();
     }
 
-    public static List<Order> getActive() {
-        return orders.stream().filter(i -> !i.isSold()).collect(Collectors.toList());
+    public static List<Order> getOrders() {
+        return orders;
     }
 }

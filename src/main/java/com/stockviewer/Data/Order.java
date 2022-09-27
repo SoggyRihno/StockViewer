@@ -7,25 +7,16 @@ import java.util.UUID;
 public class Order {
     private final String symbol;
     private final int amount;
-    private final double buyPrice;
-    private double sellPrice;
-    private final String buyDate;
-    private String sellDate;
-    private boolean sold = false;
+    private final double price;
+    private final String date;
 
     private final UUID uuid = UUID.randomUUID();
 
     public Order(int amount, double buyPrice, String symbol) {
         this.amount = amount;
-        this.buyPrice = buyPrice;
+        this.price = buyPrice;
         this.symbol = symbol;
-        this.buyDate = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss").format(LocalDateTime.now());
-    }
-
-    public void sell(double price) {
-        sellPrice = price;
-        sellDate = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss").format(LocalDateTime.now());
-        sold = true;
+        this.date = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss").format(LocalDateTime.now());
     }
 
     public String getSymbol() {
@@ -37,23 +28,11 @@ public class Order {
     }
 
     public double getBuyPrice() {
-        return buyPrice;
-    }
-
-    public double getSellPrice() {
-        return sellPrice;
+        return price;
     }
 
     public String getBuyDate() {
-        return buyDate;
-    }
-
-    public String getSellDate() {
-        return sellDate;
-    }
-
-    public boolean isSold() {
-        return sold;
+        return date;
     }
 
     public UUID getUuid() {
@@ -62,6 +41,6 @@ public class Order {
 
     @Override
     public String toString() {
-        return symbol.toUpperCase() + "\t" + amount * buyPrice + "\t" + buyDate;
+        return symbol.toUpperCase() + "\t" + amount + "\t" + price + "\t" + date.substring(0,10).trim();
     }
 }

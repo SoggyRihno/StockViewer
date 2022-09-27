@@ -1,5 +1,6 @@
 package com.stockviewer;
 
+import com.stockviewer.Data.DataManager;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
@@ -20,5 +21,10 @@ public class StockViewer extends Application {
 
     public static void main(String[] args) {
         launch();
+    }
+
+    @Override
+    public void stop(){
+        DataManager.stop();
     }
 }

@@ -3,6 +3,9 @@ package com.stockviewer.Controllers;
 import com.stockviewer.Data.DataManager;
 import com.stockviewer.Data.APIWrappers.StockData;
 import com.stockviewer.Exceptions.API.APIException;
+import com.stockviewer.Exceptions.Poor.InsufficientFundsException;
+import com.stockviewer.Exceptions.Poor.NoStockException;
+import com.stockviewer.Exceptions.Poor.PoorException;
 import com.stockviewer.StockViewer;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
@@ -49,12 +52,24 @@ public class StockPageController {
     public StockPageController(String symbol) {
         this.symbol = symbol;
     }
+
     @FXML
     void initialize() {
         backButton.setOnAction(actionEvent -> back());
-        Platform.runLater(()->{try {update();} catch (APIException ignored) {badSymbol();}});
-        ses.scheduleWithFixedDelay(()->Platform.runLater(()->{try {update();} catch (APIException ignored) {}}),1,1, TimeUnit.MINUTES);
-
+        Platform.runLater(() -> {
+            try {
+                update();
+            } catch (APIException e) {
+                showError(symbol + " is not a recognised symbol");
+                back();
+            }
+        });
+        ses.scheduleWithFixedDelay(() -> Platform.runLater(() -> {
+            try {
+                update();
+            } catch (APIException ignored) {
+            }
+        }), 1, 1, TimeUnit.MINUTES);
     }
 
     void update() throws APIException {
@@ -72,14 +87,34 @@ public class StockPageController {
             }
         });
     }
+
     @FXML
     void buyAction(ActionEvent event) throws APIException {
         update();
-        if(!AmountField.getText().isEmpty())
-            DataManager.buy(Integer.parseInt(AmountField.getText()),currentData.getLatestOpen(),symbol);
+        if (!AmountField.getText().isEmpty() && Integer.parseInt(AmountField.getText()) != 0) {
+            try {
+                DataManager.buy(Integer.parseInt(AmountField.getText()), currentData.getLatestOpen(), symbol);
+            } catch (InsufficientFundsException e) {
+                showError("You are to poor :(");
+            }
+        }
     }
+
     @FXML
-    void sellAction(ActionEvent event) {}
+    void sellAction(ActionEvent event) throws APIException {
+        update();
+        if (!AmountField.getText().isEmpty() && Integer.parseInt(AmountField.getText()) != 0) {
+            try {
+                DataManager.sell(Integer.parseInt(AmountField.getText()), currentData.getLatestOpen(), symbol);
+            } catch (PoorException e) {
+                if (e instanceof NoStockException)
+                    showError("You don't own enough of this stock");
+                else
+                    showError("You are to poor");
+            }
+        }
+    }
+
     public void back() {
         ses.shutdown();
         try {
@@ -92,9 +127,8 @@ public class StockPageController {
         }
     }
 
-    private void badSymbol() {
-        Alert alert = new Alert(Alert.AlertType.NONE, symbol + " is not a recognised symbol", ButtonType.OK);
+    private void showError(String message) {
+        Alert alert = new Alert(Alert.AlertType.NONE, message, ButtonType.OK);
         alert.showAndWait();
-        back();
     }
 }

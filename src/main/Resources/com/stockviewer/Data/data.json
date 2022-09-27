@@ -1,4 +1,12 @@
 {
-  "current": [],
-  "API_KEY" : "48PVUTGUNVYAYHA2"
+  "current": [
+    {
+      "symbol": "k",
+      "amount": 9,
+      "price": 72.9,
+      "date": "2022/09/27 09:34:59",
+      "uuid": "4223cbbb-966a-43f0-bfb5-46268eb89650"
+    }
+  ],
+  "API_KEY": "48PVUTGUNVYAYHA2"
 }

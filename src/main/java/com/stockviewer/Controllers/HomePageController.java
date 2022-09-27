@@ -2,6 +2,7 @@ package com.stockviewer.Controllers;
 
 import com.stockviewer.Data.DataManager;
 import com.stockviewer.Data.Order;
+import com.stockviewer.Data.SellOrder;
 import com.stockviewer.StockViewer;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -41,9 +42,23 @@ public class HomePageController {
 
     @FXML
     public void initialize() {
-        DataManager.getActive().stream().map(Order::toString).forEach(i -> portfolioList.getItems().add(i));
-        searchTextField.setOnKeyPressed(keyEvent -> {if (keyEvent.getCode().equals(KeyCode.ENTER)) search();
+        DataManager.getOrders().stream()
+                .filter(i -> !(i instanceof SellOrder))
+                .map(Order::toString)
+                .forEach(i -> portfolioList.getItems().add(i));
+
+        searchTextField.setOnKeyPressed(keyEvent -> {
+            if (keyEvent.getCode().equals(KeyCode.ENTER))
+                search();
         });
+        /* TODO Finish
+        searchButton.getScene().getRoot().setOnKeyPressed(keyEvent -> {
+            if (!searchTextField.isFocused()) {
+                searchTextField.setText(searchTextField.getText() + keyEvent.getText());
+                searchTextField.requestFocus();
+            }
+        });
+         */
     }
 
     @FXML
