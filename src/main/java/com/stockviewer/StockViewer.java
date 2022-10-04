@@ -1,6 +1,6 @@
 package com.stockviewer;
 
-import com.stockviewer.Data.DataManager;
+import com.stockviewer.data.DataManager;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;

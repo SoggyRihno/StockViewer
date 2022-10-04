@@ -7,13 +7,17 @@ module com.stockviewer.stockviewer {
     requires java.net.http;
     requires com.google.gson;
 
-    exports com.stockviewer.Controllers;
     exports com.stockviewer;
-    exports com.stockviewer.Data;
+    exports com.stockviewer.controllers;
+    exports com.stockviewer.exceptions.API;
+    exports com.stockviewer.exceptions.Poor;
+    exports com.stockviewer.data;
+    exports com.stockviewer.data.wrappers;
+
+
+
+
     opens com.stockviewer to javafx.fxml;
-    opens com.stockviewer.Controllers to javafx.fxml;
-    opens com.stockviewer.Data to com.google.gson;
-    exports com.stockviewer.Exceptions.API;
-    exports com.stockviewer.Exceptions.Poor;
-    exports com.stockviewer.Data.APIWrappers;
+    opens com.stockviewer.controllers to javafx.fxml;
+    opens com.stockviewer.data to com.google.gson;
 }

@@ -1,5 +1,4 @@
-import com.stockviewer.Data.DataManager;
-import com.stockviewer.Data.APIInterval;
+import com.stockviewer.data.DataManager;
 import org.junit.jupiter.api.Test;
 
 import java.util.concurrent.ExecutionException;
