@@ -16,7 +16,6 @@ import javafx.stage.Window;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Objects;
 
 public class HomePageController {
     @FXML
@@ -87,7 +86,7 @@ public class HomePageController {
     }
 
     void search() {
-        if (Objects.equals(searchButton.getText(), "")) return;
+        if (searchButton.getText().isEmpty()) return;
         try {
             FXMLLoader loader = new FXMLLoader(StockViewer.class.getResource("XML/StockPage.fxml"));
             loader.setController(new StockPageController(searchTextField.getText()));

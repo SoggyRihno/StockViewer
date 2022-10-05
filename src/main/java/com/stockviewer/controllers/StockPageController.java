@@ -26,6 +26,7 @@ import java.io.IOException;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.Comparator;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -74,7 +75,7 @@ public class StockPageController {
         Platform.runLater(() -> {
             try {
                 update();
-            } catch (APIException e) {
+            } catch (APIException | ExecutionException | InterruptedException e) {
                 showError(symbol + " is not a recognised symbol");
                 back();
             }
@@ -82,12 +83,13 @@ public class StockPageController {
         ses.scheduleWithFixedDelay(() -> Platform.runLater(() -> {
             try {
                 update();
-            } catch (APIException ignored) {
+            } catch (APIException | ExecutionException | InterruptedException e) {
+                e.printStackTrace();
             }
         }), 1, 1, TimeUnit.MINUTES);
     }
 
-    void update() throws APIException {
+    void update() throws APIException, ExecutionException, InterruptedException {
         LocalDateTime date = LocalDateTime.now().minusDays(1);
         currentData = StockData.newStockData(symbol);
         openLabel.setText(String.valueOf(currentData.getLatestOpen()));
@@ -106,7 +108,11 @@ public class StockPageController {
 
     @FXML
     void buyAction(ActionEvent event) throws APIException {
-        update();
+        try {
+            update();
+        } catch (ExecutionException | InterruptedException e) {
+            e.printStackTrace();
+        }
         if (!amountField.getText().isEmpty() && Integer.parseInt(amountField.getText()) != 0) {
             try {
                 DataManager.buy(Integer.parseInt(amountField.getText()), currentData.getLatestOpen(), symbol);
@@ -149,9 +155,9 @@ public class StockPageController {
 
 
     public void updateChart() {
-        try {
+        Interval interval = Interval.fromString(graphChoiceBox.getValue());
 
-            Interval interval = Interval.fromString(graphChoiceBox.getValue());
+        try {
             StockData stockData = StockData.newStockData(symbol, interval);
 
             NumberAxis xAxis = new NumberAxis();
@@ -176,8 +182,8 @@ public class StockPageController {
 
             chartBox.getChildren().clear();
             chartBox.getChildren().add(lineChart);
-        } catch (APIException e) {
-            throw new RuntimeException(e);
+        } catch (APIException | ExecutionException | InterruptedException e) {
+            e.printStackTrace();
         }
     }
 }

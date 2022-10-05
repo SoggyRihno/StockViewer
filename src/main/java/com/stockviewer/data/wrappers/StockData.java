@@ -1,6 +1,6 @@
 package com.stockviewer.data.wrappers;
 
-import com.google.gson.JsonObject;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
 import com.stockviewer.data.DataManager;
 import com.stockviewer.data.Interval;
@@ -16,35 +16,34 @@ public class StockData {
     private final List<StockDataPoint> data;
     private static final List<String> badSymbols = new ArrayList<>();
     private final Interval interval;
+
     private StockData(String symbol, Interval interval, List<StockDataPoint> data) {
         this.symbol = symbol;
         this.data = data;
         this.interval = interval;
     }
 
-    public static StockData newStockData(String symbol, Interval interval) throws APIException {
+    public static StockData newStockData(String symbol, Interval interval) throws APIException, ExecutionException, InterruptedException {
 
         if (badSymbols.contains(symbol)) throw new APIException();
-        try {
-            String raw = DataManager.getStockData(symbol, interval).get();
-            if (raw == null)
-                throw new APIException();
-            JsonObject json = JsonParser.parseString(raw).getAsJsonObject();
-            String series = json.keySet().stream().filter(i -> i.contains("Time Series")).findFirst().orElse("");
-            JsonObject data = json.get(series).getAsJsonObject();
-            final LocalDateTime currentTime = LocalDateTime.now().minusDays(1).minusDays(interval.getRange());
-            return new StockData(symbol,interval, data.keySet().stream()
-                            .map(i -> new StockDataPoint(i, data.get(i).getAsJsonObject(), interval.getFormatter()))
-                            .filter(i -> i.getLocalDateTime().isAfter(currentTime))
-                            .sorted(StockDataPoint::compareTo)
-                            .toList());
-        } catch (InterruptedException | ExecutionException e) {
-            badSymbols.add(symbol);
-            throw new APIException();
-        }
+
+        final LocalDateTime currentTime = LocalDateTime.now().minusDays(1).minusDays(interval.getRange());
+        List<StockDataPoint> data = DataManager.getStockData(symbol, interval)
+                .thenApply(JsonParser::parseString)
+                .thenApply(JsonElement::getAsJsonObject)
+                .thenApply(i -> i.get(i.keySet().stream().filter(j -> !j.equals("Meta Data")).findFirst().orElse("")))
+                .thenApply(JsonElement::getAsJsonObject)
+                .thenApply(i -> i.keySet().stream()
+                        .map(j -> new StockDataPoint(j, i.get(j).getAsJsonObject(), interval.getFormatter()))
+                        .filter(j -> j.getLocalDateTime().isAfter(currentTime))
+                        .sorted(StockDataPoint::compareTo)
+                        .toList())
+                .get();
+
+        return new StockData(symbol, interval, data);
     }
 
-    public static StockData newStockData(String symbol) throws APIException {
+    public static StockData newStockData(String symbol) throws APIException, ExecutionException, InterruptedException {
         return newStockData(symbol, Interval.ONE_DAY);
     }
 

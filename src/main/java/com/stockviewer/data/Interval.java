@@ -6,9 +6,9 @@ import java.time.temporal.TemporalUnit;
 
 public enum Interval {
     ONE_DAY("1-Day", "&function=TIME_SERIES_INTRADAY&interval=5min", 1, ChronoUnit.HOURS,"yyyy-MM-dd HH:mm:ss"),
-    SEVEN_DAY("7-Day", "&function=TIME_SERIES_DAILY&outputsize=compact", 7, ChronoUnit.HOURS,"yyyy MM dd"),
-    THIRTY_DAY("30-Day", "&function=TIME_SERIES_DAILY&outputsize=compact", 30, ChronoUnit.HALF_DAYS,"yyyy MM dd"),
-    YTD("YTD", "&function=TIME_SERIES_WEEKLY&outputsize=full", -1, ChronoUnit.DAYS,"yyyy MM dd");
+    SEVEN_DAY("7-Day", "&function=TIME_SERIES_DAILY&outputsize=compact", 7, ChronoUnit.HOURS,"yyyy-MM-dd"),
+    THIRTY_DAY("30-Day", "&function=TIME_SERIES_DAILY&outputsize=compact", 30, ChronoUnit.HALF_DAYS,"yyyy-MM-dd"),
+    YTD("YTD", "&function=TIME_SERIES_WEEKLY&outputsize=full", -1, ChronoUnit.DAYS,"yyyy-MM-dd");
 
     private final String value;
     private final String apiValue;
