@@ -17,14 +17,8 @@ m
 =.idea/libraries/Maven__org_openjfx_javafx_graphics_win_19.xml,6\b\6b8747c9352ab17bd99073f20e474c5882d81dfa
 ?
 StockViewer.iml,e\0\e0be5bcd0d6dcf02416e6bb098fb7c7772621cdf
-t
-Dsrc/main/java/com/stockviewer/exceptions/API/BadSymbolException.java,d\0\d0c63f4aaa37cff361bff875a8cfc53c19b61a04
-T
-$src/tests/java/DataManagerTests.java,f\6\f65a95f2f6cc2fa90ea8e1f8227ced22aa12ba2b
 }
 Msrc/main/java/com/stockviewer/exceptions/Poor/InsufficientFundsException.java,3\2\320858b47ee7abdf1916e9c977e37226a9b168a4
-o
-?src/main/java/com/stockviewer/exceptions/API/InvalidAPIKey.java,7\1\717d6427a9d9439dcf86868b6951ca4336b8e285
 N
 src/main/java/module-info.java,1\c\1c89a5491fbfda3fb050196d6a239f20200296e7
 s

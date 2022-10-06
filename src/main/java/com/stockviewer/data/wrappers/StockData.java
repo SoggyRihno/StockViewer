@@ -5,11 +5,12 @@ import com.google.gson.JsonParser;
 import com.stockviewer.data.DataManager;
 import com.stockviewer.data.Interval;
 import com.stockviewer.exceptions.API.APIException;
+import com.stockviewer.exceptions.API.BadSymbolException;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
+import java.util.concurrent.CompletableFuture;
 
 public class StockData {
     private final String symbol;
@@ -23,12 +24,11 @@ public class StockData {
         this.interval = interval;
     }
 
-    public static StockData newStockData(String symbol, Interval interval) throws APIException, ExecutionException, InterruptedException {
-
-        if (badSymbols.contains(symbol)) throw new APIException();
+    public static CompletableFuture<StockData> newStockData(String symbol, Interval interval) throws BadSymbolException{
+        if (badSymbols.contains(symbol)) throw new BadSymbolException();
 
         final LocalDateTime currentTime = LocalDateTime.now().minusDays(1).minusDays(interval.getRange());
-        List<StockDataPoint> data = DataManager.getStockData(symbol, interval)
+        return DataManager.getStockData(symbol, interval)
                 .thenApply(JsonParser::parseString)
                 .thenApply(JsonElement::getAsJsonObject)
                 .thenApply(i -> i.get(i.keySet().stream().filter(j -> !j.equals("Meta Data")).findFirst().orElse("")))
@@ -38,12 +38,10 @@ public class StockData {
                         .filter(j -> j.getLocalDateTime().isAfter(currentTime))
                         .sorted(StockDataPoint::compareTo)
                         .toList())
-                .get();
-
-        return new StockData(symbol, interval, data);
+                .thenApply(i -> new StockData(symbol, interval, i));
     }
 
-    public static StockData newStockData(String symbol) throws APIException, ExecutionException, InterruptedException {
+    public static CompletableFuture<StockData> newStockData(String symbol) throws APIException {
         return newStockData(symbol, Interval.ONE_DAY);
     }
 

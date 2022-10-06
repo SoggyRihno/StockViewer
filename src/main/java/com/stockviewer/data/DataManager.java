@@ -2,6 +2,7 @@ package com.stockviewer.data;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.stockviewer.exceptions.API.APIException;
 import com.stockviewer.exceptions.Poor.InsufficientFundsException;
 import com.stockviewer.exceptions.Poor.NoStockException;
 import com.stockviewer.exceptions.Poor.PoorException;
@@ -26,9 +27,9 @@ import java.util.stream.Collectors;
 public class DataManager {
     private static final ScheduledExecutorService ses = Executors.newScheduledThreadPool(3);
     private static final String URL_FORMAT_STRING = "https://www.alphavantage.co/query?apikey=%s&datatype=json&symbol=%s%s";
-    private static final String FILE_PATH = "src/main/resources/com/stockviewer/Data/data.json";
+    private static final Path FILE_PATH = Path.of("src/main/resources/com/stockviewer/Data/data.json");
     private static final List<Runnable> queue = new ArrayList<>();
-
+    private static long rateLimitedUntil =System.currentTimeMillis();
     private static String API_KEY = "48PVUTGUNVYAYHA2";
     private static List<Order> orders = new ArrayList<>();
     private static Map<String, String> cache = new HashMap<>();
@@ -45,7 +46,7 @@ public class DataManager {
 
     public static void saveJson() {
         try {
-            FileWriter fw = new FileWriter(FILE_PATH);
+            FileWriter fw = new FileWriter(FILE_PATH.toFile());
             Gson gson = new GsonBuilder().setPrettyPrinting().create();
             gson.toJson(Map.ofEntries(Map.entry("initial", initial), Map.entry("API_KEY", API_KEY), Map.entry("orders", orders)), fw);
             fw.close();
@@ -55,7 +56,7 @@ public class DataManager {
     }
 
     public static void loadJson() {
-        File dataFile = new File(FILE_PATH);
+        File dataFile = FILE_PATH.toFile();
         try {
             if (!dataFile.exists())
                 dataFile.createNewFile();
@@ -74,16 +75,16 @@ public class DataManager {
     }
 
     public static void clear() throws IOException {
-        Files.newInputStream(Path.of(FILE_PATH), StandardOpenOption.TRUNCATE_EXISTING);
+        Files.newInputStream(FILE_PATH, StandardOpenOption.TRUNCATE_EXISTING);
         loadJson();
         saveJson();
     }
 
     public static void importFile(File file) throws IOException {
-        File dataFile = new File(FILE_PATH);
+        File dataFile = FILE_PATH.toFile();
         Gson gson = new GsonBuilder().setPrettyPrinting().create();
         Reader reader = Files.newBufferedReader(dataFile.toPath());
-        Map<String, Object> map = gson.fromJson(reader, Map.class);
+        Map<String, ?> map = gson.fromJson(reader, Map.class);
         if (map.containsKey("initial") && map.containsKey("API_KEY") && map.containsKey("orders")) {
             FileWriter fw = new FileWriter(file);
             gson.toJson(map, fw);
@@ -100,38 +101,42 @@ public class DataManager {
         ses.shutdown();
     }
 
-    // FIXME: 9/28/2022
-    private static String getSync(String url) {
-        System.out.println(url);
+    private static String getSync(String url) throws ExecutionException, InterruptedException {
         HttpClient client = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(10)).build();
         HttpRequest request = HttpRequest.newBuilder(URI.create(url)).build();
-        try {
-            return client.sendAsync(request, HttpResponse.BodyHandlers.ofString()).get().body();
-        } catch (ExecutionException | InterruptedException e) {
-            return "";
-        }
+        return client.sendAsync(request, HttpResponse.BodyHandlers.ofString()).get().body();
     }
-
     public static CompletableFuture<String> getStockData(String symbol, Interval interval) {
         CompletableFuture<String> result = new CompletableFuture<>();
         String url = String.format(URL_FORMAT_STRING, API_KEY, symbol, interval.getApiValue());
-        if (cache.containsKey(url))
-            result.complete(cache.get(symbol));
-        else
-            queue.add(() -> result.completeAsync(() -> cacheData(url, getSync(url))));
+        if (cache.containsKey(url)) {
+            result.completeAsync(()->cache.get(url));
+        }else{
+            Runnable task = ()->{
+                try {
+                    String raw = getSync(url);
+                    cache.put(url, raw);
+                    result.complete(raw);
+                } catch (ExecutionException e) {
+                    e.printStackTrace();
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(new APIException("Api timed out with url : " + url));
+                }
+            };
+            //time shouldn't change between conditions or else possible negative schedule
+            long current = System.nanoTime();
+            if(rateLimitedUntil - current >0)
+                ses.submit(task);
+            else
+                ses.schedule(task, rateLimitedUntil -current, TimeUnit.NANOSECONDS);
+            rateLimitedUntil = (long) (current + 1.2e9);
+        }
         return result;
     }
 
-    public static String cacheData(String url, String raw) {
-        cache.put(url, raw);
-        cleanCache();
-        return raw;
-    }
-
     public static void cleanCache() {
-        cache = cache.keySet().stream().limit(10).collect(Collectors.toMap(Function.identity(), i -> cache.get(i)));
+        cache = cache.keySet().stream().limit(50).collect(Collectors.toMap(Function.identity(), i -> cache.get(i)));
     }
-
     public static double calculateCurrent() {
         return initial + orders.stream().mapToDouble(i -> i.getBuyPrice() * i.getAmount() * (i instanceof SellOrder ? -1 : 1)).sum();
     }

@@ -6,6 +6,7 @@ import com.stockviewer.data.Interval;
 import com.stockviewer.data.wrappers.StockData;
 import com.stockviewer.data.wrappers.StockDataPoint;
 import com.stockviewer.exceptions.API.APIException;
+import com.stockviewer.exceptions.API.BadSymbolException;
 import com.stockviewer.exceptions.Poor.InsufficientFundsException;
 import com.stockviewer.exceptions.Poor.NoStockException;
 import com.stockviewer.exceptions.Poor.PoorException;
@@ -69,50 +70,82 @@ public class StockPageController {
             graphChoiceBox.getItems().add(value.toString());
         graphChoiceBox.setValue(Interval.ONE_DAY.toString());
 
+        //listeners
         graphChoiceBox.getSelectionModel().selectedIndexProperty().addListener(i -> updateChart());
-
-        backButton.setOnAction(actionEvent -> back());
-        Platform.runLater(() -> {
-            try {
-                update();
-            } catch (APIException | ExecutionException | InterruptedException e) {
-                showError(symbol + " is not a recognised symbol");
-                back();
+        amountField.textProperty().addListener((observable, oldValue, newValue) -> {
+            if (!newValue.matches("\\d*")) {
+                amountField.setText(newValue.replaceAll("[^\\d]", ""));
             }
         });
+        backButton.setOnAction(actionEvent -> back());
         ses.scheduleWithFixedDelay(() -> Platform.runLater(() -> {
             try {
                 update();
-            } catch (APIException | ExecutionException | InterruptedException e) {
-                e.printStackTrace();
+            } catch (APIException e) {
+                showError(symbol + " is not a recognised symbol");
+                back();
             }
-        }), 1, 1, TimeUnit.MINUTES);
+
+        }), 0, 1, TimeUnit.MINUTES);
     }
 
-    void update() throws APIException, ExecutionException, InterruptedException {
+    void update() throws APIException {
         LocalDateTime date = LocalDateTime.now().minusDays(1);
-        currentData = StockData.newStockData(symbol);
+        loadData();
         openLabel.setText(String.valueOf(currentData.getLatestOpen()));
         volumeLabel.setText(String.valueOf(currentData.getDailyVolume(date)));
         changeLabel.setText(currentData.getLatestChange());
         changeLabel.setStyle(changeLabel.getText().contains("-") ? "-fx-text-fill: red" : "-fx-text-fill: green");
         symbolLabel.setText(symbol);
         dateLabel.setText(currentData.getLatestTimeFormatted());
-        amountField.textProperty().addListener((observable, oldValue, newValue) -> {
-            if (!newValue.matches("\\d*")) {
-                amountField.setText(newValue.replaceAll("[^\\d]", ""));
-            }
-        });
+
         updateChart();
+    }
+
+    private void loadData() throws APIException {
+        try {
+            currentData = StockData.newStockData(symbol).get();
+        } catch (InterruptedException | ExecutionException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public void updateChart() {
+        Interval interval = Interval.fromString(graphChoiceBox.getValue());
+
+        try {
+            StockData stockData = StockData.newStockData(symbol, interval).get();
+            LocalDateTime date = LocalDateTime.now().minusDays(1).minusDays(interval.getRange());
+
+            NumberAxis xAxis = new NumberAxis();
+            xAxis.setLabel(graphChoiceBox.getValue());
+            NumberAxis yAxis = new NumberAxis();
+            yAxis.setLabel("Price");
+            XYChart.Series<Number, Number> series = new XYChart.Series<>();
+            ObservableList<XYChart.Data<Number, Number>> data = series.getData();
+
+            (interval.equals(Interval.YTD)
+                    ? stockData.getData()
+                    : stockData.getData().stream()
+                    .sorted(Comparator.comparing(StockDataPoint::getLocalDateTime))
+                    .filter(i -> i.getLocalDateTime().isAfter(date))
+                    .toList()
+            ).forEach(i -> data.add(new XYChart.Data<>(Duration.between(i.getLocalDateTime(), date).toHours(), i.getOpen())));
+
+            LineChart<Number, Number> lineChart = new LineChart<>(xAxis, yAxis);
+            lineChart.getData().add(series);
+
+            chartBox.getChildren().clear();
+            chartBox.getChildren().add(lineChart);
+        } catch (BadSymbolException | ExecutionException | InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+
     }
 
     @FXML
     void buyAction(ActionEvent event) throws APIException {
-        try {
-            update();
-        } catch (ExecutionException | InterruptedException e) {
-            e.printStackTrace();
-        }
+        loadData();
         if (!amountField.getText().isEmpty() && Integer.parseInt(amountField.getText()) != 0) {
             try {
                 DataManager.buy(Integer.parseInt(amountField.getText()), currentData.getLatestOpen(), symbol);
@@ -151,39 +184,5 @@ public class StockPageController {
     private void showError(String message) {
         Alert alert = new Alert(Alert.AlertType.NONE, message, ButtonType.OK);
         alert.showAndWait();
-    }
-
-
-    public void updateChart() {
-        Interval interval = Interval.fromString(graphChoiceBox.getValue());
-
-        try {
-            StockData stockData = StockData.newStockData(symbol, interval);
-
-            NumberAxis xAxis = new NumberAxis();
-            xAxis.setLabel(graphChoiceBox.getValue());
-            NumberAxis yAxis = new NumberAxis();
-            yAxis.setLabel("Price");
-
-            XYChart.Series<Number, Number> series = new XYChart.Series<>();
-            ObservableList<XYChart.Data<Number, Number>> data = series.getData();
-
-            LocalDateTime date = LocalDateTime.now().minusDays(1).minusDays(interval.getRange());
-            (interval.equals(Interval.YTD)
-                    ? stockData.getData()
-                    : stockData.getData().stream()
-                        .sorted(Comparator.comparing(StockDataPoint::getLocalDateTime))
-                        .filter(i -> i.getLocalDateTime().isAfter(date))
-                        .toList()
-            ).forEach(i -> data.add(new XYChart.Data<>(Duration.between(i.getLocalDateTime(), date).toHours(), i.getOpen())));
-
-            LineChart<Number, Number> lineChart = new LineChart<>(xAxis, yAxis);
-            lineChart.getData().add(series);
-
-            chartBox.getChildren().clear();
-            chartBox.getChildren().add(lineChart);
-        } catch (APIException | ExecutionException | InterruptedException e) {
-            e.printStackTrace();
-        }
     }
 }

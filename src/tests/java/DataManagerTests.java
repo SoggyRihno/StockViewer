@@ -1,4 +1,3 @@
-import com.stockviewer.data.DataManager;
 import org.junit.jupiter.api.Test;
 
 import java.util.concurrent.ExecutionException;
@@ -7,7 +6,7 @@ public class DataManagerTests {
 
     @Test
     void getStockData() throws ExecutionException, InterruptedException {
-        DataManager.getStockData("ibm", APIInterval.FIVE_MINUTES).get();
+        //DataManager.getStockData("ibm", APIInterval.FIVE_MINUTES).get();
 
     }
 
