@@ -6,7 +6,6 @@ import com.stockviewer.data.Interval;
 import com.stockviewer.data.wrappers.StockData;
 import com.stockviewer.data.wrappers.StockDataPoint;
 import com.stockviewer.exceptions.API.APIException;
-import com.stockviewer.exceptions.API.BadSymbolException;
 import com.stockviewer.exceptions.Poor.InsufficientFundsException;
 import com.stockviewer.exceptions.Poor.NoStockException;
 import com.stockviewer.exceptions.Poor.PoorException;
@@ -25,6 +24,7 @@ import javafx.stage.Stage;
 
 import java.io.IOException;
 import java.time.Duration;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.concurrent.ExecutionException;
@@ -115,29 +115,43 @@ public class StockPageController {
 
         try {
             StockData stockData = StockData.newStockData(symbol, interval).get();
-            LocalDateTime date = LocalDateTime.now().minusDays(1).minusDays(interval.getRange());
+            LocalDateTime date = LocalDate.now().minusDays(interval.getRange()).atTime(9,0);
 
-            NumberAxis xAxis = new NumberAxis();
-            xAxis.setLabel(graphChoiceBox.getValue());
-            NumberAxis yAxis = new NumberAxis();
-            yAxis.setLabel("Price");
             XYChart.Series<Number, Number> series = new XYChart.Series<>();
             ObservableList<XYChart.Data<Number, Number>> data = series.getData();
 
+
+            // FIXME: 10/13/2022 stream -> map -> average->map
             (interval.equals(Interval.YTD)
                     ? stockData.getData()
                     : stockData.getData().stream()
                     .sorted(Comparator.comparing(StockDataPoint::getLocalDateTime))
                     .filter(i -> i.getLocalDateTime().isAfter(date))
                     .toList()
-            ).forEach(i -> data.add(new XYChart.Data<>(Duration.between(i.getLocalDateTime(), date).toHours(), i.getOpen())));
+            ).forEach(i -> data.add(new XYChart.Data<>(Duration.between(date, i.getLocalDateTime()).toSeconds()/3600.0, i.getOpen())));
+
+
+            // FIXME: 10/13/2022
+            NumberAxis xAxis = new NumberAxis();
+            xAxis.setLabel(graphChoiceBox.getValue());
+            xAxis.setAutoRanging(false);
+            xAxis.setUpperBound(Math.ceil(data.get(data.size()-1).getXValue().doubleValue()));
+            xAxis.setLowerBound(Math.ceil(data.get(0).getXValue().doubleValue()));
+            xAxis.setTickUnit(Math.ceil((xAxis.getUpperBound()-xAxis.getLowerBound()) / 20) );
+
+            NumberAxis yAxis = new NumberAxis();
+            yAxis.setLabel("Price");
+            yAxis.setAutoRanging(false);
+            yAxis.setUpperBound(Math.ceil(data.get(data.size()-1).getYValue().doubleValue() * 1.05));
+            yAxis.setLowerBound(Math.ceil(data.get(0).getYValue().doubleValue() * .95));
 
             LineChart<Number, Number> lineChart = new LineChart<>(xAxis, yAxis);
             lineChart.getData().add(series);
+            lineChart.setCreateSymbols(false);
 
             chartBox.getChildren().clear();
             chartBox.getChildren().add(lineChart);
-        } catch (BadSymbolException | ExecutionException | InterruptedException e) {
+        } catch (ExecutionException | InterruptedException e) {
             throw new RuntimeException(e);
         }
 

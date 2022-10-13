@@ -33,3 +33,7 @@ a
 1src/main/java/com/stockviewer/data/SellOrder.java,6\2\62204d3662352f726d994d5ccb328d9cb4251477
 x
 Hsrc/main/java/com/stockviewer/exceptions/Poor/UnknownOrderException.java,e\2\e22088f5b38fe1e53c920ee6ae0d25f775aa9b32
+^
+.src/main/java/com/stockviewer/StockViewer.java,1\e\1e1ef73b8e35704a368fa42a931d4ab5fd81968d
+q
+Asrc/main/java/com/stockviewer/controllers/HomePageController.java,4\1\416f3f04da461132a3f48e82c3514a6131996e6b

@@ -19,6 +19,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.time.Duration;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeFormatterBuilder;
+import java.time.temporal.ChronoField;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.function.Function;
@@ -34,6 +37,14 @@ public class DataManager {
     private static List<Order> orders = new ArrayList<>();
     private static Map<String, String> cache = new HashMap<>();
     private static double initial = 100000;
+    private static final DateTimeFormatter dateTimeFormatter = new DateTimeFormatterBuilder()
+            .appendPattern("yyyy-MM-dd")
+            .optionalStart()
+            .appendPattern(" HH:mm:ss")
+            .optionalEnd()
+            .parseDefaulting(ChronoField.HOUR_OF_DAY, 0)
+            .parseDefaulting(ChronoField.MINUTE_OF_HOUR, 0)
+            .toFormatter();
 
     static {
         loadJson();
@@ -178,5 +189,9 @@ public class DataManager {
 
     public static List<Order> getOrders() {
         return orders;
+    }
+
+    public static DateTimeFormatter getDateTimeFormatter(){
+        return dateTimeFormatter;
     }
 }
