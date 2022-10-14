@@ -6,18 +6,14 @@ import com.stockviewer.data.Interval;
 import com.stockviewer.data.wrappers.StockData;
 import com.stockviewer.data.wrappers.StockDataPoint;
 import com.stockviewer.exceptions.API.APIException;
-import com.stockviewer.exceptions.Poor.InsufficientFundsException;
-import com.stockviewer.exceptions.Poor.NoStockException;
-import com.stockviewer.exceptions.Poor.PoorException;
+import com.stockviewer.exceptions.Poor.*;
 import javafx.application.Platform;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
-import javafx.scene.chart.LineChart;
-import javafx.scene.chart.NumberAxis;
-import javafx.scene.chart.XYChart;
+import javafx.scene.chart.*;
 import javafx.scene.control.*;
 import javafx.scene.layout.HBox;
 import javafx.stage.Stage;
@@ -115,11 +111,10 @@ public class StockPageController {
 
         try {
             StockData stockData = StockData.newStockData(symbol, interval).get();
-            LocalDateTime date = LocalDate.now().minusDays(interval.getRange()).atTime(9,0);
+            LocalDateTime date = LocalDate.now().minusDays(interval.getRange()).atTime(9, 0);
 
             XYChart.Series<Number, Number> series = new XYChart.Series<>();
             ObservableList<XYChart.Data<Number, Number>> data = series.getData();
-
 
             // FIXME: 10/13/2022 stream -> map -> average->map
             (interval.equals(Interval.YTD)
@@ -128,23 +123,25 @@ public class StockPageController {
                     .sorted(Comparator.comparing(StockDataPoint::getLocalDateTime))
                     .filter(i -> i.getLocalDateTime().isAfter(date))
                     .toList()
-            ).forEach(i -> data.add(new XYChart.Data<>(Duration.between(date, i.getLocalDateTime()).toSeconds()/3600.0, i.getOpen())));
+            ).forEach(i -> data.add(new XYChart.Data<>(Duration.between(date, i.getLocalDateTime()).toSeconds() / 3600.0, i.getOpen())));
+            //(-**,0]
 
+            for (XYChart.Data<Number, Number> datum : data) {
+                System.out.printf("(%f,%f)%n",datum.getXValue().doubleValue(),datum.getYValue().doubleValue());
+            }
 
-            // FIXME: 10/13/2022
             NumberAxis xAxis = new NumberAxis();
             xAxis.setLabel(graphChoiceBox.getValue());
             xAxis.setAutoRanging(false);
-            xAxis.setUpperBound(Math.ceil(data.get(data.size()-1).getXValue().doubleValue()));
-            xAxis.setLowerBound(Math.ceil(data.get(0).getXValue().doubleValue()));
-            xAxis.setTickUnit(Math.ceil((xAxis.getUpperBound()-xAxis.getLowerBound()) / 20) );
+            xAxis.setLowerBound(Math.floor(data.get(data.size() - 1).getXValue().doubleValue()));
+            xAxis.setUpperBound(0);
 
             NumberAxis yAxis = new NumberAxis();
             yAxis.setLabel("Price");
             yAxis.setAutoRanging(false);
-            yAxis.setUpperBound(Math.ceil(data.get(data.size()-1).getYValue().doubleValue() * 1.05));
-            yAxis.setLowerBound(Math.ceil(data.get(0).getYValue().doubleValue() * .95));
-
+            yAxis.setUpperBound(data.stream().map(XYChart.Data::getYValue).map(Number::doubleValue).map(Math::ceil).max(Double::compareTo).orElse(0.0));
+            yAxis.setLowerBound(data.stream().map(XYChart.Data::getYValue).map(Number::doubleValue).map(Math::floor).min(Double::compareTo).orElse(0.0));
+            yAxis.setTickUnit(.1);
             LineChart<Number, Number> lineChart = new LineChart<>(xAxis, yAxis);
             lineChart.getData().add(series);
             lineChart.setCreateSymbols(false);

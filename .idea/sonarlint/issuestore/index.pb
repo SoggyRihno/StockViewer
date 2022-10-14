@@ -37,3 +37,7 @@ Hsrc/main/java/com/stockviewer/exceptions/Poor/UnknownOrderException.java,e\2\e
 .src/main/java/com/stockviewer/StockViewer.java,1\e\1e1ef73b8e35704a368fa42a931d4ab5fd81968d
 q
 Asrc/main/java/com/stockviewer/controllers/HomePageController.java,4\1\416f3f04da461132a3f48e82c3514a6131996e6b
+t
+Dsrc/main/java/com/stockviewer/exceptions/API/BadSymbolException.java,d\0\d0c63f4aaa37cff361bff875a8cfc53c19b61a04
+o
+?src/main/java/com/stockviewer/exceptions/API/InvalidAPIKey.java,7\1\717d6427a9d9439dcf86868b6951ca4336b8e285
