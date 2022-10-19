@@ -2,7 +2,6 @@ package com.stockviewer.controllers;
 
 import com.stockviewer.StockViewer;
 import com.stockviewer.data.DataManager;
-import javafx.event.ActionEvent;
 import javafx.event.EventType;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -78,13 +77,8 @@ public class HomePageController {
                 }
             }
         });
+        searchButton.setOnAction(actionEvent -> search());
     }
-
-    @FXML
-    void SearchAction(ActionEvent event) {
-        search();
-    }
-
     void search() {
         if (searchButton.getText().isEmpty()) return;
         try {

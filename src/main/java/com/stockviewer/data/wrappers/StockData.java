@@ -1,41 +1,55 @@
 package com.stockviewer.data.wrappers;
 
-import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.stockviewer.data.DataManager;
 import com.stockviewer.data.Interval;
+import com.stockviewer.exceptions.API.APIException;
+import com.stockviewer.exceptions.API.InvalidCallException;
+import com.stockviewer.exceptions.API.InvalidKeyException;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 
 public class StockData {
     private final String symbol;
     private final List<StockDataPoint> data;
-    private final Interval interval;
 
-    private StockData(String symbol, Interval interval, List<StockDataPoint> data) {
+    private StockData(String symbol, List<StockDataPoint> data) {
         this.symbol = symbol;
         this.data = data;
-        this.interval = interval;
+
     }
 
-    public static CompletableFuture<StockData> newStockData(String symbol, Interval interval){
+    public static StockData newStockData(String symbol, Interval interval) throws ExecutionException, InterruptedException, APIException {
         final LocalDateTime currentTime = LocalDateTime.now().minusDays(1).minusDays(interval.getRange());
-        return DataManager.getStockData(symbol, interval)
-                .thenApply(JsonParser::parseString)
-                .thenApply(JsonElement::getAsJsonObject)
-                .thenApply(i -> i.get(i.keySet().stream().filter(j -> !j.equals("Meta Data")).findFirst().orElse("")))
-                .thenApply(JsonElement::getAsJsonObject)
-                .thenApply(i -> i.keySet().stream()
-                        .map(j -> new StockDataPoint(j, i.get(j).getAsJsonObject()))
-                        .filter(j -> j.getLocalDateTime().isAfter(currentTime))
-                        .sorted(StockDataPoint::compareTo)
-                        .toList())
-                .thenApply(i -> new StockData(symbol, interval, i));
+        String raw = DataManager.getStockData(symbol,interval).get();
+        JsonObject json = JsonParser.parseString(raw).getAsJsonObject();
+
+        if(json.keySet().contains("Error Message")){
+            String result = json.get("Error Message").getAsString();
+            if(result.contains("apikey is invalid or missing"))
+                throw new InvalidKeyException(result);
+            else if (result.contains("Invalid API call"))
+                throw new InvalidCallException(result);
+        }
+        String key = json.keySet().stream().filter(j -> !j.equals("Meta Data")).findFirst().orElse("");
+
+        if(key == "")
+            throw new APIException();
+
+        JsonObject data = json.get(key).getAsJsonObject();
+        return new StockData(symbol,
+                data.keySet().stream()
+                .map(i -> new StockDataPoint(i, data.get(i).getAsJsonObject()))
+                .filter(i -> i.getLocalDateTime().isAfter(currentTime))
+                .sorted(StockDataPoint::compareTo)
+                .toList());
     }
 
-    public static CompletableFuture<StockData> newStockData(String symbol){
+
+    public static StockData newStockData(String symbol) throws APIException, ExecutionException, InterruptedException {
         return newStockData(symbol, Interval.ONE_DAY);
     }
 

@@ -33,7 +33,7 @@ public class DataManager {
     private static final Path FILE_PATH = Path.of("src/main/resources/com/stockviewer/Data/data.json");
     private static final List<Runnable> queue = new ArrayList<>();
     private static long rateLimitedUntil =System.currentTimeMillis();
-    private static String API_KEY = "48PVUTGUNVYAYHA2";
+    private static String API_KEY = "";
     private static List<Order> orders = new ArrayList<>();
     private static Map<String, String> cache = new HashMap<>();
     private static double initial = 100000;
@@ -95,7 +95,7 @@ public class DataManager {
         File dataFile = FILE_PATH.toFile();
         Gson gson = new GsonBuilder().setPrettyPrinting().create();
         Reader reader = Files.newBufferedReader(dataFile.toPath());
-        Map<String, ?> map = gson.fromJson(reader, Map.class);
+        Map<String, Object> map = gson.fromJson(reader, Map.class);
         if (map.containsKey("initial") && map.containsKey("API_KEY") && map.containsKey("orders")) {
             FileWriter fw = new FileWriter(file);
             gson.toJson(map, fw);

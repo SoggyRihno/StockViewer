@@ -6,6 +6,8 @@ import com.stockviewer.data.Interval;
 import com.stockviewer.data.wrappers.StockData;
 import com.stockviewer.data.wrappers.StockDataPoint;
 import com.stockviewer.exceptions.API.APIException;
+import com.stockviewer.exceptions.API.InvalidCallException;
+import com.stockviewer.exceptions.API.InvalidKeyException;
 import com.stockviewer.exceptions.Poor.InsufficientFundsException;
 import com.stockviewer.exceptions.Poor.NoStockException;
 import com.stockviewer.exceptions.Poor.PoorException;
@@ -28,6 +30,7 @@ import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Comparator;
+import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -70,16 +73,17 @@ public class StockPageController {
         for (Interval value : Interval.values())
             graphChoiceBox.getItems().add(value.toString());
         graphChoiceBox.setValue(Interval.ONE_DAY.toString());
-
-        //listeners
         graphChoiceBox.getSelectionModel().selectedIndexProperty().addListener(i -> updateChart());
-        amountField.textProperty().addListener((observable, oldValue, newValue) -> {
-            if (!newValue.matches("\\d*")) {
-                amountField.setText(newValue.replaceAll("\\D", ""));
-            }
-        });
+        amountField.textProperty().addListener((observable, oldValue, newValue) -> amountField.setText(newValue.replaceAll("\\D", "")));
         backButton.setOnAction(actionEvent -> back());
-        ses.scheduleWithFixedDelay(() -> Platform.runLater(this::update), 0, 1, TimeUnit.MINUTES);
+
+        try {
+            update();
+        } catch (Exception e) {
+            e.printStackTrace();
+            back();
+        }
+        ses.scheduleWithFixedDelay(() -> Platform.runLater(this::update), 1, 1, TimeUnit.MINUTES);
     }
 
     void update() {
@@ -92,89 +96,6 @@ public class StockPageController {
         symbolLabel.setText(symbol);
         dateLabel.setText(currentData.getLatestTimeFormatted());
         updateChart();
-    }
-
-    private void loadData() {
-        try {
-            currentData = StockData.newStockData(symbol).get();
-        } catch (InterruptedException | ExecutionException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    public void updateChart() {
-        Interval interval = Interval.fromString(graphChoiceBox.getValue());
-
-        try {
-            StockData stockData = StockData.newStockData(symbol, interval).get();
-            LocalDateTime date = LocalDate.now().minusDays(interval.getRange()).atTime(9, 0);
-            XYChart.Series<Number, Number> series = new XYChart.Series<>();
-
-            ObservableList<XYChart.Data<Number, Number>> data = FXCollections.observableList(stockData.getData().stream()
-                    .sorted(Comparator.comparing(StockDataPoint::getLocalDateTime))
-                    .filter(i -> interval.equals(Interval.YTD) || i.getLocalDateTime().isAfter(date))
-                    .map(i -> {
-                        if (interval.equals(Interval.ONE_DAY))
-                            return new XYChart.Data<Number,Number>(i.getLocalDateTime().getHour() + 60.0 / i.getLocalDateTime().getMinute(), i.getClose());
-                        else
-                            return new XYChart.Data<Number,Number>(Duration.between(date, i.getLocalDateTime()).toSeconds() / 86400.0, i.getClose());
-                    }).toList());
-
-            NumberAxis xAxis = new NumberAxis();
-            xAxis.setLabel(graphChoiceBox.getValue());
-            xAxis.setAutoRanging(false);
-            xAxis.setTickUnit(1);
-            if (interval.equals(Interval.ONE_DAY)) {
-                xAxis.setLowerBound(9.5);
-                xAxis.setUpperBound(17);
-            }else{
-                xAxis.setLowerBound(data.get(0).getXValue().doubleValue());
-                xAxis.setUpperBound(data.get(data.size()-1).getXValue().doubleValue());
-            }
-
-            NumberAxis yAxis = new NumberAxis();
-            yAxis.setLabel("Price");
-            yAxis.setAutoRanging(false);
-            yAxis.setUpperBound(data.stream().map(XYChart.Data::getYValue).map(Number::doubleValue).map(Math::ceil).max(Double::compareTo).orElse(0.0));
-            yAxis.setLowerBound(data.stream().map(XYChart.Data::getYValue).map(Number::doubleValue).map(Math::floor).min(Double::compareTo).orElse(0.0));
-            yAxis.setTickUnit(.1);
-            LineChart<Number, Number> lineChart = new LineChart<>(xAxis, yAxis);
-            lineChart.getData().add(series);
-            lineChart.setCreateSymbols(false);
-
-            chartBox.getChildren().clear();
-            chartBox.getChildren().add(lineChart);
-
-        } catch (ExecutionException | InterruptedException e) {
-            e.printStackTrace();
-        }
-
-    }
-
-    @FXML
-    void buyAction(ActionEvent event) {
-        loadData();
-        if (!amountField.getText().isEmpty() && Integer.parseInt(amountField.getText()) != 0) {
-            try {
-                DataManager.buy(Integer.parseInt(amountField.getText()), currentData.getLatestOpen(), symbol);
-            } catch (InsufficientFundsException e) {
-                showError("You are to poor :(");
-            }
-        }
-    }
-
-    @FXML
-    void sellAction(ActionEvent event) throws APIException {
-        update();
-        if (!amountField.getText().isEmpty() && Integer.parseInt(amountField.getText()) != 0) {
-            try {
-                DataManager.sell(Integer.parseInt(amountField.getText()), currentData.getLatestOpen(), symbol);
-            } catch (NoStockException e) {
-                showError("You don't own enough of this stock");
-            } catch (PoorException e) {
-                showError("You are to poor");
-            }
-        }
     }
 
     public void back() {
@@ -192,5 +113,117 @@ public class StockPageController {
     private void showError(String message) {
         Alert alert = new Alert(Alert.AlertType.NONE, message, ButtonType.OK);
         alert.showAndWait();
+    }
+
+    private void loadData() {
+        try {
+            currentData = StockData.newStockData(symbol);
+        } catch (InterruptedException | ExecutionException | APIException e) {
+            if (e instanceof InvalidCallException) {
+                showError(e.toString());
+                back();
+            } else if (e instanceof InvalidKeyException) {
+                // FIXME: 10/18/2022 api key bad
+            } else throw new RuntimeException(e);
+        }
+    }
+
+    public void updateChart() {
+        Interval interval = Interval.fromString(graphChoiceBox.getValue());
+        try {
+            StockData stockData = interval.equals(Interval.ONE_DAY) ? currentData : StockData.newStockData(symbol, interval);
+            LocalDateTime date = LocalDate.now().minusDays(interval.getRange()).atTime(9, 0);
+
+
+            List<XYChart.Data<Number, Number>> list = stockData.getData().stream()
+                    .sorted(Comparator.comparing(StockDataPoint::getLocalDateTime))
+                    .filter(i -> interval.equals(Interval.YTD) || i.getLocalDateTime().isAfter(date))
+                    .map(i -> {
+                        double time = switch (interval) {
+                            // hours since day before at 9
+                            case ONE_DAY -> Duration.between(date, i.getLocalDateTime()).toMinutes()/(24 *60.0);
+                            case SEVEN_DAY, THIRTY_DAY -> Duration.between(date, i.getLocalDateTime()).toHours() / 24.0;
+                            case YTD -> Duration.between(date, i.getLocalDateTime()).toDays();
+                        };
+                        return new XYChart.Data<Number, Number>(time, i.getClose());
+                    }).toList();
+
+
+            ObservableList<XYChart.Data<Number, Number>> data = FXCollections.observableList(list);
+
+            NumberAxis xAxis = new NumberAxis();
+            xAxis.setLabel(graphChoiceBox.getValue());
+            /*xAxis.setAutoRanging(false);
+            xAxis.setTickUnit(1);
+            xAxis.setTickUnit(1);
+
+
+            switch (interval) {
+                case ONE_DAY:
+                    xAxis.setLowerBound(0);
+                    xAxis.setUpperBound(9);
+                    break;
+                case SEVEN_DAY:
+                    xAxis.setLowerBound(0);
+                    xAxis.setUpperBound(7);
+                    break;
+                case THIRTY_DAY:
+                    xAxis.setLowerBound(0);
+                    xAxis.setUpperBound(30);
+                    break;
+                case YTD:
+                    xAxis.setLowerBound(data.get(0).getXValue().doubleValue());
+                    xAxis.setUpperBound(data.get(data.size() - 1).getXValue().doubleValue());
+                    break;
+            }
+
+             */
+            double yMin = data.stream().map(XYChart.Data::getYValue).map(Number::doubleValue).map(Math::ceil).min(Double::compareTo).orElse(0.0);
+            double yMax = data.stream().map(XYChart.Data::getYValue).map(Number::doubleValue).map(Math::ceil).max(Double::compareTo).orElse(0.0);
+
+            NumberAxis yAxis = new NumberAxis();
+            yAxis.setLabel("Price");
+            yAxis.setAutoRanging(false);
+            yAxis.setLowerBound(yMin);
+            yAxis.setUpperBound(yMax);
+            yAxis.setTickUnit(.1);
+
+            LineChart<Number, Number> lineChart = new LineChart<>(xAxis, yAxis);
+            lineChart.getData().add(new XYChart.Series<>(data));
+            lineChart.setCreateSymbols(false);
+
+            chartBox.getChildren().clear();
+            chartBox.getChildren().add(lineChart);
+        } catch (ExecutionException | InterruptedException | APIException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    // FIXME: 10/18/2022
+    @FXML
+    void buyAction(ActionEvent event) {
+        loadData();
+        if (!amountField.getText().isEmpty() && Integer.parseInt(amountField.getText()) != 0) {
+            try {
+                DataManager.buy(Integer.parseInt(amountField.getText()), currentData.getLatestOpen(), symbol);
+            } catch (InsufficientFundsException e) {
+                showError("You are to poor :(");
+            }
+        }
+    }
+
+    // FIXME: 10/18/2022
+    @FXML
+    void sellAction(ActionEvent event) {
+        update();
+        if (!amountField.getText().isEmpty() && Integer.parseInt(amountField.getText()) != 0) {
+            try {
+                DataManager.sell(Integer.parseInt(amountField.getText()), currentData.getLatestOpen(), symbol);
+            } catch (NoStockException e) {
+                showError("You don't own enough of this stock");
+            } catch (PoorException e) {
+                showError("You are to poor");
+            }
+        }
     }
 }
