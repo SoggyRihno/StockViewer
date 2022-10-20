@@ -1,6 +1,4 @@
 {
-  "API_KEY": "48PVUTGUNVYAYHA2",
-  "initial": 10000.0,
   "orders": [
     {
       "symbol": "k",
@@ -128,5 +126,7 @@
       "date": "2022/09/28 10:12:15",
       "uuid": "3f80f235-4c55-4570-b52e-151bccd6308d"
     }
-  ]
+  ],
+  "initial": 10000.0,
+  "API_KEY": "48PVUTGUNVYAYHA2"
 }

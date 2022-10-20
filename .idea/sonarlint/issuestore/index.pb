@@ -35,5 +35,7 @@ x
 Hsrc/main/java/com/stockviewer/exceptions/Poor/UnknownOrderException.java,e\2\e22088f5b38fe1e53c920ee6ae0d25f775aa9b32
 ^
 .src/main/java/com/stockviewer/StockViewer.java,1\e\1e1ef73b8e35704a368fa42a931d4ab5fd81968d
-`
-0src/main/java/com/stockviewer/data/Interval.java,d\9\d9ab84c0380f76c1267c722c90bea558796db797
+o
+?src/main/java/com/stockviewer/data/wrappers/StockDataPoint.java,b\4\b4c82997a46b30aa2c22d158534381e47c986ce5
+j
+:src/main/java/com/stockviewer/data/wrappers/StockData.java,2\f\2fbbd8d3097a6913b2e4642fd19d5f8c4eb6899f
