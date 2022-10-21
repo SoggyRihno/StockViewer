@@ -2,19 +2,27 @@ package com.stockviewer.controllers;
 
 import com.stockviewer.StockViewer;
 import com.stockviewer.data.DataManager;
+import com.stockviewer.data.Order;
+import com.stockviewer.data.SellOrder;
+import javafx.collections.FXCollections;
 import javafx.event.EventType;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
+import javafx.scene.chart.CategoryAxis;
+import javafx.scene.chart.LineChart;
+import javafx.scene.chart.NumberAxis;
+import javafx.scene.chart.XYChart;
 import javafx.scene.control.*;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyCode;
+import javafx.scene.layout.BorderPane;
 import javafx.stage.FileChooser;
-import javafx.stage.Stage;
 import javafx.stage.Window;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.*;
 
 public class HomePageController {
     @FXML
@@ -38,7 +46,11 @@ public class HomePageController {
     @FXML
     private TextField searchTextField;
     @FXML
-    private MenuItem settingsMenuItem;
+    private MenuItem APIMenuItem;
+    @FXML
+    private BorderPane borderPane;
+    @FXML
+    private LineChart<String, Number> lineChart;
 
     @FXML
     public void initialize() {
@@ -47,7 +59,10 @@ public class HomePageController {
                 search();
         });
 
-        copeMenuItem.addEventHandler(EventType.ROOT, event -> System.out.println("cope"));
+        copeMenuItem.addEventHandler(EventType.ROOT, event -> {
+        });
+        APIMenuItem.addEventHandler(EventType.ROOT, event -> setAPIKey());
+
 
         resetMenuItem.addEventHandler(EventType.ROOT, event -> {
             Alert alert = new Alert(Alert.AlertType.NONE, "Do you want to permanently clear your data?", ButtonType.YES, ButtonType.NO);
@@ -69,26 +84,72 @@ public class HomePageController {
                 FileChooser fileChooser = new FileChooser();
                 fileChooser.setTitle("Import File");
                 File file = fileChooser.showOpenDialog(Window.getWindows().stream().filter(Window::isShowing).findFirst().orElse(null));
-                try {
-                    DataManager.importFile(file);
-                } catch (IOException e) {
-                    alert = new Alert(Alert.AlertType.ERROR, "Unable to import file");
-                    alert.showAndWait();
+                if (file != null) {
+                    try {
+                        DataManager.importFile(file);
+                    } catch (IOException e) {
+                        alert = new Alert(Alert.AlertType.ERROR, "Unable to import file");
+                        alert.showAndWait();
+                    }
                 }
             }
         });
         searchButton.setOnAction(actionEvent -> search());
+
+
+        List<Order> orders = DataManager.getOrders();
+        List<XYChart.Data<String, Number>> data = new ArrayList<>();
+        for (int i = 0; i < orders.size(); i++) {
+            double current = DataManager.getInitial();
+            for (int j = 0; j < i; j++) {
+                Order order = orders.get(j);
+                current += (order instanceof SellOrder ? 1 : -1) * order.getAmount() * order.getBuyPrice();
+            }
+            data.add(new XYChart.Data<>(orders.get(i).getBuyDate(), current));
+        }
+
+        CategoryAxis xAxis = new CategoryAxis();
+        xAxis.setLabel("Date");
+        xAxis.setGapStartAndEnd(false);
+
+        List<Double> yRange = data.stream().map(XYChart.Data::getYValue).map(Number::doubleValue).toList();
+        NumberAxis yAxis = new NumberAxis();
+        yAxis.setLabel("Price");
+        yAxis.setAutoRanging(false);
+        yAxis.setLowerBound(Math.floor(yRange.get(0)));
+        yAxis.setUpperBound(Math.ceil(yRange.get(yRange.size()-1)));
+
+        lineChart = new LineChart<>(xAxis, yAxis);
+        lineChart.getData().add(new XYChart.Series<>(FXCollections.observableList(data)));
+        lineChart.setCreateSymbols(false);
     }
+
     void search() {
         if (searchButton.getText().isEmpty()) return;
         try {
             FXMLLoader loader = new FXMLLoader(StockViewer.class.getResource("XML/StockPage.fxml"));
             loader.setController(new StockPageController(searchTextField.getText()));
-            Stage stage = (Stage) searchButton.getScene().getWindow();
             Scene scene = new Scene(loader.load());
-            stage.setScene(scene);
+            StockViewer.getStage().setScene(scene);
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
+
+    void setAPIKey() {
+        TextInputDialog dialog = new TextInputDialog();
+        dialog.setGraphic(null);
+        dialog.setHeaderText("Set API Key");
+        dialog.setTitle("Set API Key");
+        Button button = new Button("Set");
+        button.setOnAction(actionEvent -> dialog.close());
+        Optional<String> result = dialog.showAndWait();
+
+        if (result.isPresent() && result.get().matches("[a-zA-Z0-9]{16}"))
+            DataManager.setAPIKey(result.get());
+        else
+            new Alert(Alert.AlertType.NONE, "API key was empty or invalid", ButtonType.OK).show();
+
+    }
+
 }

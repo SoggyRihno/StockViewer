@@ -31,6 +31,7 @@ import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -152,28 +153,13 @@ public class StockPageController {
             xAxis.setLabel("Date");
             xAxis.setGapStartAndEnd(false);
 
-
-            ObservableList<String> categories = FXCollections.observableList(xAxis.getCategories().stream().map(i -> {
-                int hour = Integer.parseInt(i.split(":")[0]);
-                hour = hour > 12 ? hour - 12 : hour;
-                return hour + ":" + i.split(":")[1];
-            }).toList());
-
-
-//https://stackoverflow.com/questions/14932788/javafx-customzied-categoryaxis-manual-without-useing-autoranging
-/*
-            xAxis.setAutoRanging(false);
-            xAxis.setCategories(categories);
-            xAxis.invalidateRange(categories);
- */
-            double yMin = data.stream().map(XYChart.Data::getYValue).map(Number::doubleValue).map(Math::floor).min(Double::compareTo).orElse(0.0);
-            double yMax = data.stream().map(XYChart.Data::getYValue).map(Number::doubleValue).map(Math::ceil).max(Double::compareTo).orElse(0.0);
+            List<Double> yRange = data.stream().map(XYChart.Data::getYValue).map(Number::doubleValue).toList();
 
             NumberAxis yAxis = new NumberAxis();
             yAxis.setLabel("Price");
             yAxis.setAutoRanging(false);
-            yAxis.setLowerBound(yMin);
-            yAxis.setUpperBound(yMax);
+            yAxis.setLowerBound(Math.floor(yRange.get(0)));
+            yAxis.setUpperBound(Math.ceil(yRange.get(yRange.size()-1)));
 
             LineChart<String, Number> lineChart = new LineChart<>(xAxis, yAxis);
             lineChart.getData().add(new XYChart.Series<>(data));

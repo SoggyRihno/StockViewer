@@ -9,9 +9,12 @@ import javafx.stage.Stage;
 import java.io.IOException;
 
 public class StockViewer extends Application {
+    private static Stage mainStage;
+
 
     @Override
     public void start(Stage stage) throws IOException {
+        mainStage = stage;
         FXMLLoader fxmlLoader = new FXMLLoader(StockViewer.class.getResource("XML/HomePage.fxml"));
         Scene scene = new Scene(fxmlLoader.load(), 600, 500);
         stage.setTitle("Stock Viewer");
@@ -26,5 +29,9 @@ public class StockViewer extends Application {
     @Override
     public void stop(){
         DataManager.stop();
+    }
+
+    public static Stage getStage(){
+        return mainStage;
     }
 }

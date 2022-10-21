@@ -32,7 +32,7 @@ public class DataManager {
     private static final String URL_FORMAT_STRING = "https://www.alphavantage.co/query?apikey=%s&datatype=json&symbol=%s%s";
     private static final Path FILE_PATH = Path.of("src/main/resources/com/stockviewer/Data/data.json");
     private static final List<Runnable> queue = new ArrayList<>();
-    private static long rateLimitedUntil =System.currentTimeMillis();
+    private static long rateLimitedUntil = System.currentTimeMillis();
     private static String API_KEY = "";
     private static List<Order> orders = new ArrayList<>();
     private static Map<String, String> cache = new HashMap<>();
@@ -65,6 +65,15 @@ public class DataManager {
             e.printStackTrace();
         }
     }
+
+    public static void setAPIKey(String apiKey) {
+        API_KEY = apiKey;
+    }
+
+    public static double getInitial(){
+        return initial;
+    }
+
 
     public static void loadJson() {
         File dataFile = FILE_PATH.toFile();
@@ -117,13 +126,14 @@ public class DataManager {
         HttpRequest request = HttpRequest.newBuilder(URI.create(url)).build();
         return client.sendAsync(request, HttpResponse.BodyHandlers.ofString()).get().body();
     }
+
     public static CompletableFuture<String> getStockData(String symbol, Interval interval) {
         CompletableFuture<String> result = new CompletableFuture<>();
         String url = String.format(URL_FORMAT_STRING, API_KEY, symbol, interval.getApiValue());
         if (cache.containsKey(url)) {
-            result.completeAsync(()->cache.get(url));
-        }else{
-            Runnable task = ()->{
+            result.completeAsync(() -> cache.get(url));
+        } else {
+            Runnable task = () -> {
                 try {
                     String raw = getSync(url);
                     cache.put(url, raw);
@@ -136,10 +146,10 @@ public class DataManager {
             };
             //time shouldn't change between conditions or else possible negative schedule
             long current = System.nanoTime();
-            if(rateLimitedUntil - current >0)
+            if (rateLimitedUntil - current > 0)
                 ses.submit(task);
             else
-                ses.schedule(task, rateLimitedUntil -current, TimeUnit.NANOSECONDS);
+                ses.schedule(task, rateLimitedUntil - current, TimeUnit.NANOSECONDS);
             rateLimitedUntil = (long) (current + 1.2e9);
         }
         return result;
@@ -148,6 +158,7 @@ public class DataManager {
     public static void cleanCache() {
         cache = cache.keySet().stream().limit(50).collect(Collectors.toMap(Function.identity(), i -> cache.get(i)));
     }
+
     public static double calculateCurrent() {
         return initial + orders.stream().mapToDouble(i -> i.getBuyPrice() * i.getAmount() * (i instanceof SellOrder ? -1 : 1)).sum();
     }
@@ -191,7 +202,7 @@ public class DataManager {
         return orders;
     }
 
-    public static DateTimeFormatter getDateTimeFormatter(){
+    public static DateTimeFormatter getDateTimeFormatter() {
         return dateTimeFormatter;
     }
 }
