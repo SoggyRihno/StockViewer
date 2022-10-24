@@ -8,7 +8,6 @@ import javafx.collections.FXCollections;
 import javafx.event.EventType;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
-import javafx.scene.Scene;
 import javafx.scene.chart.CategoryAxis;
 import javafx.scene.chart.LineChart;
 import javafx.scene.chart.NumberAxis;
@@ -22,7 +21,9 @@ import javafx.stage.Window;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 
 public class HomePageController {
     @FXML
@@ -54,6 +55,17 @@ public class HomePageController {
 
     @FXML
     public void initialize() {
+        CategoryAxis xAxis = new CategoryAxis();
+        xAxis.setLabel("Date");
+        xAxis.setGapStartAndEnd(false);
+
+        NumberAxis yAxis = new NumberAxis();
+        yAxis.setLabel("Price");
+        yAxis.setAutoRanging(false);
+
+        lineChart = new LineChart<>(xAxis, yAxis);
+        lineChart.setCreateSymbols(false);
+
         searchTextField.setOnKeyPressed(keyEvent -> {
             if (keyEvent.getCode().equals(KeyCode.ENTER))
                 search();
@@ -76,7 +88,7 @@ public class HomePageController {
                 }
             }
         });
-
+        //fixme
         importMenuItem.addEventHandler(EventType.ROOT, event -> {
             Alert alert = new Alert(Alert.AlertType.NONE, "Do you want to permanently overwrite your data?", ButtonType.YES, ButtonType.NO);
             alert.showAndWait();
@@ -86,7 +98,7 @@ public class HomePageController {
                 File file = fileChooser.showOpenDialog(Window.getWindows().stream().filter(Window::isShowing).findFirst().orElse(null));
                 if (file != null) {
                     try {
-                        DataManager.importFile(file);
+                        DataManager.importFile(file.toPath());
                     } catch (IOException e) {
                         alert = new Alert(Alert.AlertType.ERROR, "Unable to import file");
                         alert.showAndWait();
@@ -94,9 +106,8 @@ public class HomePageController {
                 }
             }
         });
+
         searchButton.setOnAction(actionEvent -> search());
-
-
         List<Order> orders = DataManager.getOrders();
         List<XYChart.Data<String, Number>> data = new ArrayList<>();
         for (int i = 0; i < orders.size(); i++) {
@@ -108,29 +119,22 @@ public class HomePageController {
             data.add(new XYChart.Data<>(orders.get(i).getBuyDate(), current));
         }
 
-        CategoryAxis xAxis = new CategoryAxis();
-        xAxis.setLabel("Date");
-        xAxis.setGapStartAndEnd(false);
-
-        List<Double> yRange = data.stream().map(XYChart.Data::getYValue).map(Number::doubleValue).toList();
-        NumberAxis yAxis = new NumberAxis();
-        yAxis.setLabel("Price");
-        yAxis.setAutoRanging(false);
-        yAxis.setLowerBound(Math.floor(yRange.get(0)));
-        yAxis.setUpperBound(Math.ceil(yRange.get(yRange.size()-1)));
-
-        lineChart = new LineChart<>(xAxis, yAxis);
-        lineChart.getData().add(new XYChart.Series<>(FXCollections.observableList(data)));
-        lineChart.setCreateSymbols(false);
+        if(!data.isEmpty()){
+            List<Double> yRange = data.stream().map(XYChart.Data::getYValue).map(Number::doubleValue).toList();
+            ((NumberAxis) lineChart.getYAxis()).setLowerBound(Math.floor(yRange.get(0)));
+            ((NumberAxis) lineChart.getYAxis()).setUpperBound(Math.ceil(yRange.get(yRange.size() - 1)));
+            lineChart.getData().clear();
+            lineChart.getData().add(new XYChart.Series<>(FXCollections.observableList(data)));
+        }
     }
 
+    //todo api key is not getting set on load
     void search() {
-        if (searchButton.getText().isEmpty()) return;
+        if (searchButton.getText().equalsIgnoreCase("")) return;
         try {
             FXMLLoader loader = new FXMLLoader(StockViewer.class.getResource("XML/StockPage.fxml"));
             loader.setController(new StockPageController(searchTextField.getText()));
-            Scene scene = new Scene(loader.load());
-            StockViewer.getStage().setScene(scene);
+            StockViewer.getStage().setScene(loader.load());
         } catch (IOException e) {
             e.printStackTrace();
         }

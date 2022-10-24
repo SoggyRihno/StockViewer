@@ -24,7 +24,6 @@ import javafx.scene.chart.NumberAxis;
 import javafx.scene.chart.XYChart;
 import javafx.scene.control.*;
 import javafx.scene.layout.HBox;
-import javafx.stage.Stage;
 
 import java.io.IOException;
 import java.time.Duration;
@@ -88,7 +87,7 @@ public class StockPageController {
         ses.scheduleWithFixedDelay(() -> Platform.runLater(this::update), 1, 1, TimeUnit.MINUTES);
     }
 
-    void update() {
+    void update(){
         LocalDateTime date = LocalDateTime.now().minusDays(1);
         loadData();
         openLabel.setText(String.valueOf(currentData.getLatestOpen()));
@@ -99,7 +98,7 @@ public class StockPageController {
         updateChart();
     }
 
-    private void loadData() {
+    private void loadData(){
         try {
             currentData = StockData.newStockData(symbol);
         } catch (InterruptedException | ExecutionException | APIException e) {
@@ -107,18 +106,18 @@ public class StockPageController {
                 showError(e.toString());
                 back();
             } else if (e instanceof InvalidKeyException) {
-                // FIXME: 10/18/2022 api key bad
-            } else throw new RuntimeException(e);
+                showError(e.toString());
+                back();
+            }else
+                 throw new RuntimeException(e);
         }
     }
 
     public void back() {
-        ses.shutdown();
+        ses.shutdownNow();
         try {
             FXMLLoader loader = new FXMLLoader(StockViewer.class.getResource("XML/HomePage.fxml"));
-            Stage stage = (Stage) backButton.getScene().getWindow();
-            Scene scene = new Scene(loader.load());
-            stage.setScene(scene);
+            StockViewer.getStage().setScene(new Scene(loader.load()));
         } catch (IOException e) {
             e.printStackTrace();
         }

@@ -2,15 +2,16 @@ package com.stockviewer.data;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.reflect.TypeToken;
 import com.stockviewer.exceptions.API.APIException;
 import com.stockviewer.exceptions.Poor.InsufficientFundsException;
 import com.stockviewer.exceptions.Poor.NoStockException;
 import com.stockviewer.exceptions.Poor.PoorException;
 
-import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Reader;
+import java.lang.reflect.Type;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -30,7 +31,8 @@ import java.util.stream.Collectors;
 public class DataManager {
     private static final ScheduledExecutorService ses = Executors.newScheduledThreadPool(3);
     private static final String URL_FORMAT_STRING = "https://www.alphavantage.co/query?apikey=%s&datatype=json&symbol=%s%s";
-    private static final Path FILE_PATH = Path.of("src/main/resources/com/stockviewer/Data/data.json");
+    private static Path ORDER_PATH = Path.of("src/main/resources/com/stockviewer/Data/orders.json");
+    private static final Path DATA_PATH = Path.of("src/main/resources/com/stockviewer/Data/data.json");
     private static final List<Runnable> queue = new ArrayList<>();
     private static long rateLimitedUntil = System.currentTimeMillis();
     private static String API_KEY = "";
@@ -45,6 +47,9 @@ public class DataManager {
             .parseDefaulting(ChronoField.HOUR_OF_DAY, 0)
             .parseDefaulting(ChronoField.MINUTE_OF_HOUR, 0)
             .toFormatter();
+    private static final Gson gson = new GsonBuilder().setPrettyPrinting().create();
+    private static final Type mapType = new TypeToken<Map<String,Object>>() {}.getType();
+    private static final Type listType = new TypeToken<ArrayList<Order>>() {}.getType();
 
     static {
         loadJson();
@@ -55,64 +60,64 @@ public class DataManager {
         ses.scheduleWithFixedDelay(DataManager::cleanCache, 1, 1, TimeUnit.MINUTES);
     }
 
-    public static void saveJson() {
-        try {
-            FileWriter fw = new FileWriter(FILE_PATH.toFile());
-            Gson gson = new GsonBuilder().setPrettyPrinting().create();
-            gson.toJson(Map.ofEntries(Map.entry("initial", initial), Map.entry("API_KEY", API_KEY), Map.entry("orders", orders)), fw);
-            fw.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
 
     public static void setAPIKey(String apiKey) {
         API_KEY = apiKey;
+        saveJson();
     }
 
-    public static double getInitial(){
+    public static double getInitial() {
         return initial;
     }
-
-
-    public static void loadJson() {
-        File dataFile = FILE_PATH.toFile();
-        try {
-            if (!dataFile.exists())
-                dataFile.createNewFile();
-            if (dataFile.length() < 0)
-                saveJson();
-            Gson gson = new Gson();
-            Reader reader = Files.newBufferedReader(dataFile.toPath());
-            Map<String, Object> map = gson.fromJson(reader, Map.class);
-            initial = (double) map.getOrDefault("initial", 10000.0);
-            API_KEY = (String) map.getOrDefault("API_KEY", "default");
-            orders = (List<Order>) map.getOrDefault("orders", new ArrayList<>());
-        } catch (IOException e) {
-            e.printStackTrace();
-            throw new RuntimeException("could not load data :(");
-        }
-    }
-
     public static void clear() throws IOException {
-        Files.newInputStream(FILE_PATH, StandardOpenOption.TRUNCATE_EXISTING);
+        Files.newInputStream(ORDER_PATH, StandardOpenOption.TRUNCATE_EXISTING);
         loadJson();
         saveJson();
     }
 
-    public static void importFile(File file) throws IOException {
-        File dataFile = FILE_PATH.toFile();
-        Gson gson = new GsonBuilder().setPrettyPrinting().create();
-        Reader reader = Files.newBufferedReader(dataFile.toPath());
-        Map<String, Object> map = gson.fromJson(reader, Map.class);
-        if (map.containsKey("initial") && map.containsKey("API_KEY") && map.containsKey("orders")) {
-            FileWriter fw = new FileWriter(file);
-            gson.toJson(map, fw);
-            fw.close();
-            loadJson();
-        } else {
+    public static void saveJson() {
+        try (FileWriter fw = new FileWriter(DATA_PATH.toFile())) {
+            Map<String, Object> data = Map.ofEntries(Map.entry("initial", initial), Map.entry("API_KEY", API_KEY));
+            gson.toJson(data, mapType , fw);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        try (FileWriter fw = new FileWriter(ORDER_PATH.toFile())) {
+            gson.toJson(orders, listType, fw);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static void loadJson() {
+        try (Reader reader = Files.newBufferedReader(DATA_PATH)) {
+            Map<String, Object> data = gson.fromJson(reader,mapType);
+            if(data !=null){
+                initial = (double) data.getOrDefault("initial",10_000);
+                API_KEY = (String) data.getOrDefault(API_KEY,"");
+            }else
+                initial = 10_000;
+                // forceapikey()
+        } catch (IOException e) {
+            e.printStackTrace();
+            //todo force set api key
+        }
+        try (Reader reader = Files.newBufferedReader(ORDER_PATH)) {
+            List<Order> fromJson =  gson.fromJson(reader, listType);
+            if(fromJson !=null)
+                orders = fromJson;
+        } catch (IOException ignored) {}
+    }
+
+    public static void importFile(Path path) throws IOException {
+        byte[] current = Files.readAllBytes(path);
+        try (Reader reader = Files.newBufferedReader(DATA_PATH)) {
+            Map<String, Object> importedData = gson.fromJson(reader, mapType);
+            initial = (double) importedData.getOrDefault("initial",10_000);
+            API_KEY = (String) importedData.getOrDefault(API_KEY,"");
             saveJson();
-            throw new IOException("Missing arguments");
+        } catch (IOException e) {
+            Files.write(path, current);
         }
     }
 
