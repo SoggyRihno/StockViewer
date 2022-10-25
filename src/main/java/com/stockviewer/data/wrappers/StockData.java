@@ -34,9 +34,9 @@ public class StockData {
             else if (result.contains("Invalid API call"))
                 throw new InvalidCallException(result);
         }
-        String key = json.keySet().stream().filter(j -> !j.equals("Meta Data")).findFirst().orElse("");
+        String key = json.keySet().stream().filter(j -> !j.equals("Meta Data")).findFirst().orElse(null);
 
-        if(key == "")
+        if(key == null)
             throw new APIException();
 
         JsonObject data = json.get(key).getAsJsonObject();

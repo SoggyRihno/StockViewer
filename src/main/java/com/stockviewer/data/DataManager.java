@@ -3,6 +3,7 @@ package com.stockviewer.data;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
+import com.stockviewer.StockViewer;
 import com.stockviewer.exceptions.API.APIException;
 import com.stockviewer.exceptions.Poor.InsufficientFundsException;
 import com.stockviewer.exceptions.Poor.NoStockException;
@@ -34,7 +35,7 @@ public class DataManager {
     private static Path ORDER_PATH = Path.of("src/main/resources/com/stockviewer/Data/orders.json");
     private static final Path DATA_PATH = Path.of("src/main/resources/com/stockviewer/Data/data.json");
     private static final List<Runnable> queue = new ArrayList<>();
-    private static long rateLimitedUntil = System.currentTimeMillis();
+    private static long rateLimitedUntil = 0;
     private static String API_KEY = "";
     private static List<Order> orders = new ArrayList<>();
     private static Map<String, String> cache = new HashMap<>();
@@ -48,8 +49,10 @@ public class DataManager {
             .parseDefaulting(ChronoField.MINUTE_OF_HOUR, 0)
             .toFormatter();
     private static final Gson gson = new GsonBuilder().setPrettyPrinting().create();
-    private static final Type mapType = new TypeToken<Map<String,Object>>() {}.getType();
-    private static final Type listType = new TypeToken<ArrayList<Order>>() {}.getType();
+    private static final Type mapType = new TypeToken<Map<String, Object>>() {
+    }.getType();
+    private static final Type listType = new TypeToken<ArrayList<Order>>() {
+    }.getType();
 
     static {
         loadJson();
@@ -69,6 +72,7 @@ public class DataManager {
     public static double getInitial() {
         return initial;
     }
+
     public static void clear() throws IOException {
         Files.newInputStream(ORDER_PATH, StandardOpenOption.TRUNCATE_EXISTING);
         loadJson();
@@ -78,7 +82,7 @@ public class DataManager {
     public static void saveJson() {
         try (FileWriter fw = new FileWriter(DATA_PATH.toFile())) {
             Map<String, Object> data = Map.ofEntries(Map.entry("initial", initial), Map.entry("API_KEY", API_KEY));
-            gson.toJson(data, mapType , fw);
+            gson.toJson(data, mapType, fw);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -91,34 +95,39 @@ public class DataManager {
 
     public static void loadJson() {
         try (Reader reader = Files.newBufferedReader(DATA_PATH)) {
-            Map<String, Object> data = gson.fromJson(reader,mapType);
-            if(data !=null){
-                initial = (double) data.getOrDefault("initial",10_000);
-                API_KEY = (String) data.getOrDefault(API_KEY,"");
-            }else
-                initial = 10_000;
-                // forceapikey()
+            Map<String, Object> data = gson.fromJson(reader, mapType);
+            if (data != null) {
+                if (data.get("initial") != null) {
+                    initial = ((Double) data.getOrDefault("initial", 10_000)).doubleValue();
+                } else {
+                    initial = 10000;
+                }
+                if (data.get("API_KEY") != null && data.get("API_KEY") != "") {
+                    API_KEY = (String) data.getOrDefault("API_KEY", "");
+                } else {
+                    StockViewer.forceApiKey();
+                }
+            }
         } catch (IOException e) {
             e.printStackTrace();
-            //todo force set api key
         }
         try (Reader reader = Files.newBufferedReader(ORDER_PATH)) {
-            List<Order> fromJson =  gson.fromJson(reader, listType);
-            if(fromJson !=null)
+            List<Order> fromJson = gson.fromJson(reader, listType);
+            if (fromJson != null)
                 orders = fromJson;
-        } catch (IOException ignored) {}
+        } catch (IOException ignored) {
+        }
     }
 
     public static void importFile(Path path) throws IOException {
         byte[] current = Files.readAllBytes(path);
-        try (Reader reader = Files.newBufferedReader(DATA_PATH)) {
-            Map<String, Object> importedData = gson.fromJson(reader, mapType);
-            initial = (double) importedData.getOrDefault("initial",10_000);
-            API_KEY = (String) importedData.getOrDefault(API_KEY,"");
+        Reader reader = Files.newBufferedReader(DATA_PATH);
+        List<Order> importedData = gson.fromJson(reader, listType);
+        if (importedData != null) {
+            orders = importedData;
             saveJson();
-        } catch (IOException e) {
+        }else
             Files.write(path, current);
-        }
     }
 
     public static void stop() {
@@ -151,11 +160,12 @@ public class DataManager {
             };
             //time shouldn't change between conditions or else possible negative schedule
             long current = System.nanoTime();
-            if (rateLimitedUntil - current > 0)
+            if (rateLimitedUntil - current > 0) {
                 ses.submit(task);
-            else
+            } else {
                 ses.schedule(task, rateLimitedUntil - current, TimeUnit.NANOSECONDS);
-            rateLimitedUntil = (long) (current + 1.2e9);
+            }
+            rateLimitedUntil = (long) (current + 1.2E9);
         }
         return result;
     }

@@ -8,6 +8,7 @@ import javafx.collections.FXCollections;
 import javafx.event.EventType;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
+import javafx.scene.Scene;
 import javafx.scene.chart.CategoryAxis;
 import javafx.scene.chart.LineChart;
 import javafx.scene.chart.NumberAxis;
@@ -128,13 +129,13 @@ public class HomePageController {
         }
     }
 
-    //todo api key is not getting set on load
     void search() {
-        if (searchButton.getText().equalsIgnoreCase("")) return;
+        if (searchTextField.getText() == null || searchTextField.getText().isEmpty())
+            return;
         try {
             FXMLLoader loader = new FXMLLoader(StockViewer.class.getResource("XML/StockPage.fxml"));
             loader.setController(new StockPageController(searchTextField.getText()));
-            StockViewer.getStage().setScene(loader.load());
+            StockViewer.getStage().setScene(new Scene(loader.load()));
         } catch (IOException e) {
             e.printStackTrace();
         }

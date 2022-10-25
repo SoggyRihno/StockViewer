@@ -6,8 +6,6 @@ import com.stockviewer.data.Interval;
 import com.stockviewer.data.wrappers.StockData;
 import com.stockviewer.data.wrappers.StockDataPoint;
 import com.stockviewer.exceptions.API.APIException;
-import com.stockviewer.exceptions.API.InvalidCallException;
-import com.stockviewer.exceptions.API.InvalidKeyException;
 import com.stockviewer.exceptions.Poor.InsufficientFundsException;
 import com.stockviewer.exceptions.Poor.NoStockException;
 import com.stockviewer.exceptions.Poor.PoorException;
@@ -23,7 +21,6 @@ import javafx.scene.chart.LineChart;
 import javafx.scene.chart.NumberAxis;
 import javafx.scene.chart.XYChart;
 import javafx.scene.control.*;
-import javafx.scene.layout.HBox;
 
 import java.io.IOException;
 import java.time.Duration;
@@ -62,7 +59,7 @@ public class StockPageController {
     @FXML
     private TextField amountField;
     @FXML
-    private HBox chartBox;
+    private LineChart<String, Number> lineChart;
 
     public StockPageController(String symbol) {
         this.symbol = symbol;
@@ -70,6 +67,17 @@ public class StockPageController {
 
     @FXML
     void initialize() {
+        CategoryAxis xAxis = new CategoryAxis();
+        xAxis.setLabel("Date");
+        xAxis.setGapStartAndEnd(false);
+
+        NumberAxis yAxis = new NumberAxis();
+        yAxis.setLabel("Price");
+        yAxis.setAutoRanging(false);
+
+        lineChart = new LineChart<>(xAxis, yAxis);
+        lineChart.setCreateSymbols(false);
+
         for (Interval value : Interval.values())
             graphChoiceBox.getItems().add(value.toString());
         graphChoiceBox.getSelectionModel().select(0);
@@ -80,14 +88,19 @@ public class StockPageController {
 
         try {
             update();
-        } catch (Exception e) {
-            e.printStackTrace();
+        } catch (APIException e) {
             back();
         }
-        ses.scheduleWithFixedDelay(() -> Platform.runLater(this::update), 1, 1, TimeUnit.MINUTES);
+
+        ses.scheduleWithFixedDelay(() -> Platform.runLater(() -> {
+            try {
+                update();
+            } catch (APIException ignored) {
+            }
+        }), 1, 1, TimeUnit.MINUTES);
     }
 
-    void update(){
+    void update() throws APIException {
         LocalDateTime date = LocalDateTime.now().minusDays(1);
         loadData();
         openLabel.setText(String.valueOf(currentData.getLatestOpen()));
@@ -98,18 +111,11 @@ public class StockPageController {
         updateChart();
     }
 
-    private void loadData(){
+    private void loadData() throws APIException {
         try {
             currentData = StockData.newStockData(symbol);
-        } catch (InterruptedException | ExecutionException | APIException e) {
-            if (e instanceof InvalidCallException) {
-                showError(e.toString());
-                back();
-            } else if (e instanceof InvalidKeyException) {
-                showError(e.toString());
-                back();
-            }else
-                 throw new RuntimeException(e);
+        } catch (InterruptedException | ExecutionException e) {
+            throw new RuntimeException(e);
         }
     }
 
@@ -148,25 +154,14 @@ public class StockPageController {
                         return new XYChart.Data<String, Number>(dateFormatted, i.getClose());
                     }).toList());
 
-            CategoryAxis xAxis = new CategoryAxis();
-            xAxis.setLabel("Date");
-            xAxis.setGapStartAndEnd(false);
-
-            List<Double> yRange = data.stream().map(XYChart.Data::getYValue).map(Number::doubleValue).toList();
-
-            NumberAxis yAxis = new NumberAxis();
-            yAxis.setLabel("Price");
-            yAxis.setAutoRanging(false);
-            yAxis.setLowerBound(Math.floor(yRange.get(0)));
-            yAxis.setUpperBound(Math.ceil(yRange.get(yRange.size()-1)));
-
-            LineChart<String, Number> lineChart = new LineChart<>(xAxis, yAxis);
-            lineChart.getData().add(new XYChart.Series<>(data));
-            lineChart.setCreateSymbols(false);
+            if(!data.isEmpty()){
+                List<Double> yRange = data.stream().map(XYChart.Data::getYValue).map(Number::doubleValue).toList();
+                ((NumberAxis) lineChart.getYAxis()).setLowerBound(Math.floor(yRange.get(0)));
+                ((NumberAxis) lineChart.getYAxis()).setUpperBound(Math.ceil(yRange.get(yRange.size() - 1)));
+                lineChart.getData().clear();
+                lineChart.getData().add(new XYChart.Series<>(data));
+            }
             lineChart.setTitle(String.valueOf(interval));
-
-            chartBox.getChildren().clear();
-            chartBox.getChildren().add(lineChart);
         } catch (ExecutionException | InterruptedException | APIException e) {
             throw new RuntimeException(e);
         }
@@ -175,7 +170,6 @@ public class StockPageController {
     // FIXME: 10/18/2022
     @FXML
     void buyAction(ActionEvent event) {
-        loadData();
         if (!amountField.getText().isEmpty() && Integer.parseInt(amountField.getText()) != 0) {
             try {
                 DataManager.buy(Integer.parseInt(amountField.getText()), currentData.getLatestOpen(), symbol);
@@ -188,7 +182,6 @@ public class StockPageController {
     // FIXME: 10/18/2022
     @FXML
     void sellAction(ActionEvent event) {
-        update();
         if (!amountField.getText().isEmpty() && Integer.parseInt(amountField.getText()) != 0) {
             try {
                 DataManager.sell(Integer.parseInt(amountField.getText()), currentData.getLatestOpen(), symbol);
