@@ -21,6 +21,7 @@ import javafx.scene.chart.LineChart;
 import javafx.scene.chart.NumberAxis;
 import javafx.scene.chart.XYChart;
 import javafx.scene.control.*;
+import javafx.scene.layout.VBox;
 
 import java.io.IOException;
 import java.time.Duration;
@@ -59,6 +60,7 @@ public class StockPageController {
     @FXML
     private TextField amountField;
     @FXML
+    private VBox chartBox;
     private LineChart<String, Number> lineChart;
 
     public StockPageController(String symbol) {
@@ -75,8 +77,10 @@ public class StockPageController {
         yAxis.setLabel("Price");
         yAxis.setAutoRanging(false);
 
+
         lineChart = new LineChart<>(xAxis, yAxis);
         lineChart.setCreateSymbols(false);
+        chartBox.getChildren().add(lineChart);
 
         for (Interval value : Interval.values())
             graphChoiceBox.getItems().add(value.toString());
@@ -138,12 +142,11 @@ public class StockPageController {
         Interval interval = Interval.fromString(graphChoiceBox.getSelectionModel().getSelectedItem());
         try {
             StockData stockData = interval.equals(Interval.ONE_DAY) ? currentData : StockData.newStockData(symbol, interval);
-
             long minDay = stockData.getData().stream().map(StockDataPoint::getLocalDateTime).mapToLong(i -> Duration.between(LocalDate.now().minusDays(1).atTime(9, 0), i).toDays()).max().orElse(0);
-            LocalDateTime date = LocalDate.now().minusDays(interval.equals(Interval.YTD) ? --minDay : interval.getRange()).atTime(9, 0);
+            LocalDateTime marketOpen = LocalDate.now().minusDays(interval.equals(Interval.YTD) ? --minDay : interval.getRange()).atTime(9, 0);
 
             ObservableList<XYChart.Data<String, Number>> data = FXCollections.observableList(stockData.getData().stream()
-                    .filter(i -> interval.equals(Interval.YTD) || i.getLocalDateTime().isAfter(date))
+                    .filter(i -> interval.equals(Interval.YTD) || i.getLocalDateTime().isAfter(marketOpen))
                     .map(i -> {
                         String dateFormatted = switch (interval) {
                             case ONE_DAY -> i.getLocalDateTime().format(DateTimeFormatter.ofPattern("HH:mm"));
@@ -154,8 +157,8 @@ public class StockPageController {
                         return new XYChart.Data<String, Number>(dateFormatted, i.getClose());
                     }).toList());
 
-            if(!data.isEmpty()){
-                List<Double> yRange = data.stream().map(XYChart.Data::getYValue).map(Number::doubleValue).toList();
+            if (!data.isEmpty()) {
+                List<Double> yRange = data.stream().map(XYChart.Data::getYValue).map(Number::doubleValue).sorted().toList();
                 ((NumberAxis) lineChart.getYAxis()).setLowerBound(Math.floor(yRange.get(0)));
                 ((NumberAxis) lineChart.getYAxis()).setUpperBound(Math.ceil(yRange.get(yRange.size() - 1)));
                 lineChart.getData().clear();

@@ -2,6 +2,7 @@ package com.stockviewer.controllers;
 
 import com.stockviewer.StockViewer;
 import com.stockviewer.data.DataManager;
+import com.stockviewer.data.Interval;
 import com.stockviewer.data.Order;
 import com.stockviewer.data.SellOrder;
 import javafx.collections.FXCollections;
@@ -16,17 +17,20 @@ import javafx.scene.chart.XYChart;
 import javafx.scene.control.*;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyCode;
-import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
 import javafx.stage.Window;
 
 import java.io.File;
 import java.io.IOException;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
 public class HomePageController {
+    @FXML
+    private ChoiceBox<String> rangeChoiceBox;
     @FXML
     private MenuItem copeMenuItem;
     @FXML
@@ -50,8 +54,7 @@ public class HomePageController {
     @FXML
     private MenuItem APIMenuItem;
     @FXML
-    private BorderPane borderPane;
-    @FXML
+    private VBox chartBox;
     private LineChart<String, Number> lineChart;
 
     @FXML
@@ -66,16 +69,15 @@ public class HomePageController {
 
         lineChart = new LineChart<>(xAxis, yAxis);
         lineChart.setCreateSymbols(false);
+        chartBox.getChildren().add(lineChart);
 
         searchTextField.setOnKeyPressed(keyEvent -> {
             if (keyEvent.getCode().equals(KeyCode.ENTER))
                 search();
         });
 
-        copeMenuItem.addEventHandler(EventType.ROOT, event -> {
-        });
+        copeMenuItem.addEventHandler(EventType.ROOT, event -> {});
         APIMenuItem.addEventHandler(EventType.ROOT, event -> setAPIKey());
-
 
         resetMenuItem.addEventHandler(EventType.ROOT, event -> {
             Alert alert = new Alert(Alert.AlertType.NONE, "Do you want to permanently clear your data?", ButtonType.YES, ButtonType.NO);
@@ -109,24 +111,12 @@ public class HomePageController {
         });
 
         searchButton.setOnAction(actionEvent -> search());
-        List<Order> orders = DataManager.getOrders();
-        List<XYChart.Data<String, Number>> data = new ArrayList<>();
-        for (int i = 0; i < orders.size(); i++) {
-            double current = DataManager.getInitial();
-            for (int j = 0; j < i; j++) {
-                Order order = orders.get(j);
-                current += (order instanceof SellOrder ? 1 : -1) * order.getAmount() * order.getBuyPrice();
-            }
-            data.add(new XYChart.Data<>(orders.get(i).getBuyDate(), current));
-        }
+        for (Interval value : Interval.values())
+            rangeChoiceBox.getItems().add(value.toString());
+        rangeChoiceBox.getSelectionModel().select(0);
+        rangeChoiceBox.setOnAction(actionEvent -> updateChart());
 
-        if(!data.isEmpty()){
-            List<Double> yRange = data.stream().map(XYChart.Data::getYValue).map(Number::doubleValue).toList();
-            ((NumberAxis) lineChart.getYAxis()).setLowerBound(Math.floor(yRange.get(0)));
-            ((NumberAxis) lineChart.getYAxis()).setUpperBound(Math.ceil(yRange.get(yRange.size() - 1)));
-            lineChart.getData().clear();
-            lineChart.getData().add(new XYChart.Series<>(FXCollections.observableList(data)));
-        }
+        updateChart();
     }
 
     void search() {
@@ -157,4 +147,35 @@ public class HomePageController {
 
     }
 
-}
+
+    void updateChart(){
+        List<Order> orders = DataManager.getOrders();
+        if(!orders.isEmpty()) {
+            Interval interval = Interval.fromString(rangeChoiceBox.getSelectionModel().getSelectedItem());
+
+            List<XYChart.Data<String, Number>> data = new ArrayList<>();
+            for (int i = 0; i < orders.size(); i++) {
+                if(LocalDateTime.parse(orders.get(i).getBuyDate(),DataManager.getDateTimeFormatter()).isAfter())
+
+
+
+                //todo fix
+
+                double current = DataManager.getInitial();
+                for (int j = 0; j < i; j++) {
+                    Order order = orders.get(j);
+                    current += (order instanceof SellOrder ? 1 : -1) * order.getAmount() * order.getBuyPrice();
+                }
+                data.add(new XYChart.Data<>(orders.get(i).getBuyDate(), current));
+            }
+
+            if(!data.isEmpty()){
+                List<Double> yRange = data.stream().map(XYChart.Data::getYValue).map(Number::doubleValue).sorted().toList();
+                ((NumberAxis) lineChart.getYAxis()).setLowerBound(Math.floor(yRange.get(0)));
+                ((NumberAxis) lineChart.getYAxis()).setUpperBound(Math.ceil(yRange.get(yRange.size() - 1)));
+                lineChart.getData().clear();
+                lineChart.getData().add(new XYChart.Series<>(FXCollections.observableList(data)));
+            }
+        }
+    }
+}?????????????????

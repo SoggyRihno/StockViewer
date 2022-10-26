@@ -1,8 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import javafx.scene.chart.CategoryAxis?>
-<?import javafx.scene.chart.LineChart?>
-<?import javafx.scene.chart.NumberAxis?>
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.ChoiceBox?>
 <?import javafx.scene.control.Label?>
@@ -41,19 +38,9 @@
                 <Button fx:id="searchButton" mnemonicParsing="false" text="Search" />
             </HBox>
             <VBox prefHeight="200.0" prefWidth="100.0" VBox.vgrow="ALWAYS">
-                <HBox alignment="TOP_CENTER" prefHeight="197.0" prefWidth="342.0" VBox.vgrow="ALWAYS">
-               <LineChart fx:id="LineChart" prefHeight="286.0" prefWidth="408.0">
-                 <xAxis>
-                   <CategoryAxis side="BOTTOM" />
-                 </xAxis>
-                 <yAxis>
-                   <NumberAxis side="LEFT" />
-                 </yAxis>
-               </LineChart>
-                </HBox>
-                <HBox alignment="TOP_CENTER" prefHeight="44.0" prefWidth="342.0">
-                    <ChoiceBox prefWidth="150.0" />
-                </HBox>
+                <VBox fx:id="chartBox" alignment="TOP_CENTER" prefHeight="197.0" prefWidth="342.0" VBox.vgrow="ALWAYS">
+                    <ChoiceBox fx:id="rangeChoiceBox" prefWidth="150.0" />
+                </VBox>
             </VBox>
         </VBox>
     </center>
