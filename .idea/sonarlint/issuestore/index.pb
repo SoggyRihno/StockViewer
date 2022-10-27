@@ -23,5 +23,3 @@ p
 @src/main/java/com/stockviewer/exceptions/Poor/PoorException.java,8\d\8d0fb1064ab0b41d1a7b69eec2236050a6495dc0
 x
 Hsrc/main/java/com/stockviewer/exceptions/Poor/UnknownOrderException.java,e\2\e22088f5b38fe1e53c920ee6ae0d25f775aa9b32
-o
-?src/main/java/com/stockviewer/data/wrappers/StockDataPoint.java,b\4\b4c82997a46b30aa2c22d158534381e47c986ce5

@@ -1,7 +1,6 @@
 package com.stockviewer.data;
 
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.UUID;
 
 public class Order {
@@ -15,7 +14,7 @@ public class Order {
         this.amount = amount;
         this.price = buyPrice;
         this.symbol = symbol;
-        this.date = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss").format(LocalDateTime.now());
+        this.date = DataManager.getDateTimeFormatter().format(LocalDateTime.now());
     }
 
     public String getSymbol() {

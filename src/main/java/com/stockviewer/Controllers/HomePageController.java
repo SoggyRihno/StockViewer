@@ -1,4 +1,4 @@
-package com.stockviewer.controllers;
+package com.stockviewer.Controllers;
 
 import com.stockviewer.StockViewer;
 import com.stockviewer.data.DataManager;
@@ -23,6 +23,8 @@ import javafx.stage.Window;
 
 import java.io.File;
 import java.io.IOException;
+import java.time.Duration;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -65,7 +67,6 @@ public class HomePageController {
 
         NumberAxis yAxis = new NumberAxis();
         yAxis.setLabel("Price");
-        yAxis.setAutoRanging(false);
 
         lineChart = new LineChart<>(xAxis, yAxis);
         lineChart.setCreateSymbols(false);
@@ -75,10 +76,8 @@ public class HomePageController {
             if (keyEvent.getCode().equals(KeyCode.ENTER))
                 search();
         });
-
         copeMenuItem.addEventHandler(EventType.ROOT, event -> {});
         APIMenuItem.addEventHandler(EventType.ROOT, event -> setAPIKey());
-
         resetMenuItem.addEventHandler(EventType.ROOT, event -> {
             Alert alert = new Alert(Alert.AlertType.NONE, "Do you want to permanently clear your data?", ButtonType.YES, ButtonType.NO);
             alert.showAndWait();
@@ -91,7 +90,6 @@ public class HomePageController {
                 }
             }
         });
-        //fixme
         importMenuItem.addEventHandler(EventType.ROOT, event -> {
             Alert alert = new Alert(Alert.AlertType.NONE, "Do you want to permanently overwrite your data?", ButtonType.YES, ButtonType.NO);
             alert.showAndWait();
@@ -109,7 +107,6 @@ public class HomePageController {
                 }
             }
         });
-
         searchButton.setOnAction(actionEvent -> search());
         for (Interval value : Interval.values())
             rangeChoiceBox.getItems().add(value.toString());
@@ -144,38 +141,36 @@ public class HomePageController {
             DataManager.setAPIKey(result.get());
         else
             new Alert(Alert.AlertType.NONE, "API key was empty or invalid", ButtonType.OK).show();
-
     }
 
-
-    void updateChart(){
+    void updateChart() {
         List<Order> orders = DataManager.getOrders();
-        if(!orders.isEmpty()) {
+        if (!orders.isEmpty()) {
             Interval interval = Interval.fromString(rangeChoiceBox.getSelectionModel().getSelectedItem());
-
+            long minDay = orders.stream().map(Order::getBuyDate).map(i -> LocalDateTime.parse(i, DataManager.getDateTimeFormatter())).mapToLong(i -> Duration.between(LocalDateTime.now(), i).toDays()).max().orElse(0);
+            LocalDateTime earliest = LocalDate.now().minusDays(interval.equals(Interval.YTD) ? --minDay : interval.getRange()).atTime(9, 0);
             List<XYChart.Data<String, Number>> data = new ArrayList<>();
+            if (LocalDateTime.parse(orders.get(0).getBuyDate(), DataManager.getDateTimeFormatter()).isAfter(earliest))
+                data.add(new XYChart.Data<>(earliest.format(DataManager.getDateTimeFormatter()), DataManager.getInitial()));
             for (int i = 0; i < orders.size(); i++) {
-                if(LocalDateTime.parse(orders.get(i).getBuyDate(),DataManager.getDateTimeFormatter()).isAfter())
-
-
-
-                //todo fix
-
-                double current = DataManager.getInitial();
-                for (int j = 0; j < i; j++) {
-                    Order order = orders.get(j);
-                    current += (order instanceof SellOrder ? 1 : -1) * order.getAmount() * order.getBuyPrice();
+                if (LocalDateTime.parse(orders.get(i).getBuyDate(), DataManager.getDateTimeFormatter()).isAfter(earliest)) {
+                    LocalDateTime time = LocalDateTime.parse(orders.get(i).getBuyDate(), DataManager.getDateTimeFormatter());
+                    double current = DataManager.getInitial();
+                    for (int j = 0; j < i; j++) {
+                        Order order = orders.get(j);
+                        current += (order instanceof SellOrder ? 1 : -1) * order.getAmount() * order.getBuyPrice();
+                    }
+                    data.add(new XYChart.Data<>(DataManager.formatByInterval(time, interval), current));
                 }
-                data.add(new XYChart.Data<>(orders.get(i).getBuyDate(), current));
             }
-
-            if(!data.isEmpty()){
+            if (!data.isEmpty()) {
+                data.add(new XYChart.Data<>(DataManager.formatByInterval(LocalDateTime.now(), interval), data.get(data.size() - 1).getYValue().doubleValue()));
                 List<Double> yRange = data.stream().map(XYChart.Data::getYValue).map(Number::doubleValue).sorted().toList();
                 ((NumberAxis) lineChart.getYAxis()).setLowerBound(Math.floor(yRange.get(0)));
                 ((NumberAxis) lineChart.getYAxis()).setUpperBound(Math.ceil(yRange.get(yRange.size() - 1)));
-                lineChart.getData().clear();
-                lineChart.getData().add(new XYChart.Series<>(FXCollections.observableList(data)));
+
+                lineChart.setData(FXCollections.observableList(List.of(new XYChart.Series<>(FXCollections.observableList(data)))));
             }
         }
     }
-}?????????????????
+}

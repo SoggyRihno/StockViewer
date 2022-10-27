@@ -7,13 +7,11 @@ import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.TextInputDialog;
 import javafx.stage.Stage;
-
 import java.io.IOException;
 import java.util.Optional;
 
 public class StockViewer extends Application {
     private static Stage mainStage;
-
 
     @Override
     public void start(Stage stage) throws IOException {
@@ -46,7 +44,6 @@ public class StockViewer extends Application {
         Button button = new Button("Set");
         button.setOnAction(actionEvent -> dialog.close());
         Optional<String> result = dialog.showAndWait();
-
 
         if (result.isPresent() && result.get().matches("[a-zA-Z0-9]{16}"))
             DataManager.setAPIKey(result.get());

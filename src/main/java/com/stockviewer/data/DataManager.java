@@ -21,6 +21,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.time.Duration;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeFormatterBuilder;
 import java.time.temporal.ChronoField;
@@ -204,13 +205,23 @@ public class DataManager {
 
     public static void sell(int amount, double buyPrice, String symbol) throws PoorException {
         int ownedAmount = getOwned().getOrDefault(symbol, 0);
-        if (ownedAmount >= amount)
-            if (amount * buyPrice <= calculateCurrent())
+        if (ownedAmount >= amount) {
+            if (amount * buyPrice <= calculateCurrent()) {
                 orders.add(new SellOrder(amount, buyPrice, symbol));
-            else
+            } else {
                 throw new InsufficientFundsException();
-        else
+            }
+        }else {
             throw new NoStockException();
+        }
+    }
+
+    public static String formatByInterval(LocalDateTime time, Interval interval){
+       return switch (interval) {
+            case ONE_DAY -> time.format(DateTimeFormatter.ofPattern("HH:mm"));
+            case YTD -> time.format(DateTimeFormatter.ofPattern("MMM/dd/yyyy"));
+            default -> time.format(DateTimeFormatter.ofPattern("MMM/dd HH:mm"));
+        };
     }
 
     public static List<Order> getOrders() {

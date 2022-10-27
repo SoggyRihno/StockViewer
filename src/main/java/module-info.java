@@ -8,7 +8,7 @@ module com.stockviewer.stockviewer {
     requires com.google.gson;
 
     exports com.stockviewer;
-    exports com.stockviewer.controllers;
+    exports com.stockviewer.Controllers;
     exports com.stockviewer.exceptions.API;
     exports com.stockviewer.exceptions.Poor;
     exports com.stockviewer.data;
@@ -18,6 +18,6 @@ module com.stockviewer.stockviewer {
 
 
     opens com.stockviewer to javafx.fxml;
-    opens com.stockviewer.controllers to javafx.fxml;
+    opens com.stockviewer.Controllers to javafx.fxml;
     opens com.stockviewer.data to com.google.gson;
 }

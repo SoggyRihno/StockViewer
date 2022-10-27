@@ -7,7 +7,6 @@ import com.stockviewer.data.Interval;
 import com.stockviewer.exceptions.API.APIException;
 import com.stockviewer.exceptions.API.InvalidCallException;
 import com.stockviewer.exceptions.API.InvalidKeyException;
-
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
@@ -19,7 +18,6 @@ public class StockData {
     private StockData(String symbol, List<StockDataPoint> data) {
         this.symbol = symbol;
         this.data = data;
-
     }
 
     public static StockData newStockData(String symbol, Interval interval) throws ExecutionException, InterruptedException, APIException {
@@ -35,7 +33,6 @@ public class StockData {
                 throw new InvalidCallException(result);
         }
         String key = json.keySet().stream().filter(j -> !j.equals("Meta Data")).findFirst().orElse(null);
-
         if(key == null)
             throw new APIException();
 
@@ -47,7 +44,6 @@ public class StockData {
                 .sorted(StockDataPoint::compareTo)
                 .toList());
     }
-
 
     public static StockData newStockData(String symbol) throws APIException, ExecutionException, InterruptedException {
         return newStockData(symbol, Interval.ONE_DAY);

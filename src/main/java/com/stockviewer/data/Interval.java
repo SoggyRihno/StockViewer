@@ -4,7 +4,7 @@ public enum Interval {
     ONE_DAY("1-Day", "&function=TIME_SERIES_INTRADAY&interval=5min", 1),
     SEVEN_DAY("7-Day", "&function=TIME_SERIES_DAILY&outputsize=full", 7),
     THIRTY_DAY("30-Day", "&function=TIME_SERIES_DAILY&outputsize=compact", 30),
-    YTD("YTD", "&function=TIME_SERIES_WEEKLY&outputsize=full", Integer.MAX_VALUE);
+    YTD("YTD", "&function=TIME_SERIES_WEEKLY&outputsize=compact", Integer.MAX_VALUE);
 
     private final String value;
     private final String apiValue;

@@ -1,4 +1,4 @@
-package com.stockviewer.controllers;
+package com.stockviewer.Controllers;
 
 import com.stockviewer.StockViewer;
 import com.stockviewer.data.DataManager;
@@ -11,7 +11,6 @@ import com.stockviewer.exceptions.Poor.NoStockException;
 import com.stockviewer.exceptions.Poor.PoorException;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -27,7 +26,7 @@ import java.io.IOException;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
@@ -35,10 +34,6 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 public class StockPageController {
-    private final ScheduledExecutorService ses = Executors.newSingleThreadScheduledExecutor();
-    private final String symbol;
-    private StockData currentData;
-
     @FXML
     private Button buyButton;
     @FXML
@@ -61,6 +56,9 @@ public class StockPageController {
     private TextField amountField;
     @FXML
     private VBox chartBox;
+    private final ScheduledExecutorService ses = Executors.newSingleThreadScheduledExecutor();
+    private final String symbol;
+    private StockData currentData;
     private LineChart<String, Number> lineChart;
 
     public StockPageController(String symbol) {
@@ -77,7 +75,6 @@ public class StockPageController {
         yAxis.setLabel("Price");
         yAxis.setAutoRanging(false);
 
-
         lineChart = new LineChart<>(xAxis, yAxis);
         lineChart.setCreateSymbols(false);
         chartBox.getChildren().add(lineChart);
@@ -89,18 +86,12 @@ public class StockPageController {
         amountField.textProperty().addListener((observable, oldValue, newValue) -> amountField.setText(newValue.replaceAll("\\D", "")));
         backButton.setOnAction(actionEvent -> back());
         symbolLabel.setText(symbol.toUpperCase());
-
-        try {
-            update();
-        } catch (APIException e) {
-            back();
-        }
+        try { update(); }
+        catch (APIException e) { back(); }
 
         ses.scheduleWithFixedDelay(() -> Platform.runLater(() -> {
-            try {
-                update();
-            } catch (APIException ignored) {
-            }
+            try { update(); }
+            catch (APIException ignored) {}
         }), 1, 1, TimeUnit.MINUTES);
     }
 
@@ -145,31 +136,31 @@ public class StockPageController {
             long minDay = stockData.getData().stream().map(StockDataPoint::getLocalDateTime).mapToLong(i -> Duration.between(LocalDate.now().minusDays(1).atTime(9, 0), i).toDays()).max().orElse(0);
             LocalDateTime marketOpen = LocalDate.now().minusDays(interval.equals(Interval.YTD) ? --minDay : interval.getRange()).atTime(9, 0);
 
-            ObservableList<XYChart.Data<String, Number>> data = FXCollections.observableList(stockData.getData().stream()
-                    .filter(i -> interval.equals(Interval.YTD) || i.getLocalDateTime().isAfter(marketOpen))
-                    .map(i -> {
-                        String dateFormatted = switch (interval) {
-                            case ONE_DAY -> i.getLocalDateTime().format(DateTimeFormatter.ofPattern("HH:mm"));
-                            case SEVEN_DAY, THIRTY_DAY ->
-                                    i.getLocalDateTime().format(DateTimeFormatter.ofPattern("MMM/dd HH:mm"));
-                            case YTD -> i.getLocalDateTime().format(DateTimeFormatter.ofPattern("MMM/dd/yyyy"));
-                        };
-                        return new XYChart.Data<String, Number>(dateFormatted, i.getClose());
-                    }).toList());
+            List<XYChart.Data<String, Number>> points = stockData.getData().stream()
+                            .filter(i -> interval.equals(Interval.YTD) || i.getLocalDateTime().isAfter(marketOpen))
+                            .map(i -> new XYChart.Data<String, Number>(DataManager.formatByInterval(i.getLocalDateTime(), interval), i.getClose()))
+                            .toList();
 
-            if (!data.isEmpty()) {
-                List<Double> yRange = data.stream().map(XYChart.Data::getYValue).map(Number::doubleValue).sorted().toList();
+            if (interval == Interval.YTD) {
+                List<XYChart.Data<String, Number>> limited = new ArrayList<>();
+                for (int i = 0; i < points.size(); i++)
+                    if (i % 50 == 0)
+                        limited.add(points.get(i));
+                points = limited;
+            }
+            var data = FXCollections.observableList(List.of(new XYChart.Series<>(FXCollections.observableList(points))));
+
+            if (!points.isEmpty()) {
+                List<Double> yRange = points.stream().map(XYChart.Data::getYValue).map(Number::doubleValue).sorted().toList();
                 ((NumberAxis) lineChart.getYAxis()).setLowerBound(Math.floor(yRange.get(0)));
                 ((NumberAxis) lineChart.getYAxis()).setUpperBound(Math.ceil(yRange.get(yRange.size() - 1)));
-                lineChart.getData().clear();
-                lineChart.getData().add(new XYChart.Series<>(data));
+                lineChart.setData(data);
             }
             lineChart.setTitle(String.valueOf(interval));
         } catch (ExecutionException | InterruptedException | APIException e) {
             throw new RuntimeException(e);
         }
     }
-
     // FIXME: 10/18/2022
     @FXML
     void buyAction(ActionEvent event) {
