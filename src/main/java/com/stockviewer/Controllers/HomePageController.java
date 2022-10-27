@@ -76,7 +76,8 @@ public class HomePageController {
             if (keyEvent.getCode().equals(KeyCode.ENTER))
                 search();
         });
-        copeMenuItem.addEventHandler(EventType.ROOT, event -> {});
+        copeMenuItem.addEventHandler(EventType.ROOT, event -> {
+        });
         APIMenuItem.addEventHandler(EventType.ROOT, event -> setAPIKey());
         resetMenuItem.addEventHandler(EventType.ROOT, event -> {
             Alert alert = new Alert(Alert.AlertType.NONE, "Do you want to permanently clear your data?", ButtonType.YES, ButtonType.NO);
@@ -147,13 +148,19 @@ public class HomePageController {
         List<Order> orders = DataManager.getOrders();
         if (!orders.isEmpty()) {
             Interval interval = Interval.fromString(rangeChoiceBox.getSelectionModel().getSelectedItem());
+
             long minDay = orders.stream().map(Order::getBuyDate).map(i -> LocalDateTime.parse(i, DataManager.getDateTimeFormatter())).mapToLong(i -> Duration.between(LocalDateTime.now(), i).toDays()).max().orElse(0);
             LocalDateTime earliest = LocalDate.now().minusDays(interval.equals(Interval.YTD) ? --minDay : interval.getRange()).atTime(9, 0);
             List<XYChart.Data<String, Number>> data = new ArrayList<>();
-            if (LocalDateTime.parse(orders.get(0).getBuyDate(), DataManager.getDateTimeFormatter()).isAfter(earliest))
-                data.add(new XYChart.Data<>(earliest.format(DataManager.getDateTimeFormatter()), DataManager.getInitial()));
+
+            double starting = DataManager.getInitial();
+            for (Order value : orders)
+                if (LocalDateTime.parse(value.getBuyDate(), DataManager.getDateTimeFormatter()).isAfter(earliest))
+                    starting += (value instanceof SellOrder ? 1 : -1) * value.getAmount() * value.getBuyPrice();
+            data.add(new XYChart.Data<>(DataManager.formatByInterval(earliest, interval), starting));
+
             for (int i = 0; i < orders.size(); i++) {
-                if (LocalDateTime.parse(orders.get(i).getBuyDate(), DataManager.getDateTimeFormatter()).isAfter(earliest)) {
+                if (LocalDateTime.parse(orders.get(i).getBuyDate(), DataManager.getDateTimeFormatter()).isBefore(earliest)) {
                     LocalDateTime time = LocalDateTime.parse(orders.get(i).getBuyDate(), DataManager.getDateTimeFormatter());
                     double current = DataManager.getInitial();
                     for (int j = 0; j < i; j++) {
