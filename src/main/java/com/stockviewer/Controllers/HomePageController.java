@@ -76,19 +76,14 @@ public class HomePageController {
             if (keyEvent.getCode().equals(KeyCode.ENTER))
                 search();
         });
-        copeMenuItem.addEventHandler(EventType.ROOT, event -> {
-        });
+        copeMenuItem.addEventHandler(EventType.ROOT, event -> cope());
         APIMenuItem.addEventHandler(EventType.ROOT, event -> setAPIKey());
         resetMenuItem.addEventHandler(EventType.ROOT, event -> {
             Alert alert = new Alert(Alert.AlertType.NONE, "Do you want to permanently clear your data?", ButtonType.YES, ButtonType.NO);
             alert.showAndWait();
             if (alert.getResult().equals(ButtonType.YES)) {
-                try {
-                    DataManager.clear();
-                } catch (IOException e) {
-                    alert = new Alert(Alert.AlertType.ERROR, "Unable to clear File");
-                    alert.showAndWait();
-                }
+                DataManager.clear();
+                updateChart();
             }
         });
         importMenuItem.addEventHandler(EventType.ROOT, event -> {
@@ -113,7 +108,6 @@ public class HomePageController {
             rangeChoiceBox.getItems().add(value.toString());
         rangeChoiceBox.getSelectionModel().select(0);
         rangeChoiceBox.setOnAction(actionEvent -> updateChart());
-
         updateChart();
     }
 
@@ -149,7 +143,7 @@ public class HomePageController {
         if (!orders.isEmpty()) {
             Interval interval = Interval.fromString(rangeChoiceBox.getSelectionModel().getSelectedItem());
 
-            long minDay = orders.stream().map(Order::getBuyDate).map(i -> LocalDateTime.parse(i, DataManager.getDateTimeFormatter())).mapToLong(i -> Duration.between(LocalDateTime.now(), i).toDays()).max().orElse(0);
+            long minDay = orders.stream().parallel().map(Order::getBuyDate).map(i -> LocalDateTime.parse(i, DataManager.getDateTimeFormatter())).mapToLong(i -> Duration.between(LocalDateTime.now(), i).toDays()).max().orElse(0);
             LocalDateTime earliest = LocalDate.now().minusDays(interval.equals(Interval.YTD) ? --minDay : interval.getRange()).atTime(9, 0);
             List<XYChart.Data<String, Number>> data = new ArrayList<>();
 
@@ -172,12 +166,25 @@ public class HomePageController {
             }
             if (!data.isEmpty()) {
                 data.add(new XYChart.Data<>(DataManager.formatByInterval(LocalDateTime.now(), interval), data.get(data.size() - 1).getYValue().doubleValue()));
-                List<Double> yRange = data.stream().map(XYChart.Data::getYValue).map(Number::doubleValue).sorted().toList();
+                List<Double> yRange = data.stream().parallel().map(XYChart.Data::getYValue).map(Number::doubleValue).sorted().toList();
                 ((NumberAxis) lineChart.getYAxis()).setLowerBound(Math.floor(yRange.get(0)));
                 ((NumberAxis) lineChart.getYAxis()).setUpperBound(Math.ceil(yRange.get(yRange.size() - 1)));
-
                 lineChart.setData(FXCollections.observableList(List.of(new XYChart.Series<>(FXCollections.observableList(data)))));
+                lineChart.requestFocus();
             }
         }
+    }
+
+    private void cope() {
+        Alert alert = new Alert(Alert.AlertType.NONE, ":(", ButtonType.OK, ButtonType.NO);
+        alert.setTitle("That sounds like a personal problem");
+        alert.setOnHiding(i -> {
+            i.consume();
+            alert.setX(Math.random() * alert.getX());
+            alert.setY(Math.random() * alert.getX());
+        });
+        Optional<ButtonType> result = alert.showAndWait();
+        if(result.isPresent() && result.get().equals(ButtonType.NO))
+            cope();
     }
 }

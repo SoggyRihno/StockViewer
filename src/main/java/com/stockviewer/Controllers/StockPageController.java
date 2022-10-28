@@ -26,7 +26,6 @@ import java.io.IOException;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
@@ -86,12 +85,17 @@ public class StockPageController {
         amountField.textProperty().addListener((observable, oldValue, newValue) -> amountField.setText(newValue.replaceAll("\\D", "")));
         backButton.setOnAction(actionEvent -> back());
         symbolLabel.setText(symbol.toUpperCase());
-        try { update(); }
-        catch (APIException e) { back(); }
+        try {
+            update();
+        } catch (APIException e) {
+            back();
+        }
 
         ses.scheduleWithFixedDelay(() -> Platform.runLater(() -> {
-            try { update(); }
-            catch (APIException ignored) {}
+            try {
+                update();
+            } catch (APIException ignored) {
+            }
         }), 1, 1, TimeUnit.MINUTES);
     }
 
@@ -133,25 +137,20 @@ public class StockPageController {
         Interval interval = Interval.fromString(graphChoiceBox.getSelectionModel().getSelectedItem());
         try {
             StockData stockData = interval.equals(Interval.ONE_DAY) ? currentData : StockData.newStockData(symbol, interval);
-            long minDay = stockData.getData().stream().map(StockDataPoint::getLocalDateTime).mapToLong(i -> Duration.between(LocalDate.now().minusDays(1).atTime(9, 0), i).toDays()).max().orElse(0);
+            long minDay = stockData.getData().stream().parallel().map(StockDataPoint::getLocalDateTime).mapToLong(i -> Duration.between(LocalDate.now().minusDays(1).atTime(9, 0), i).toDays()).max().orElse(0);
             LocalDateTime marketOpen = LocalDate.now().minusDays(interval.equals(Interval.YTD) ? --minDay : interval.getRange()).atTime(9, 0);
 
             List<XYChart.Data<String, Number>> points = stockData.getData().stream()
-                            .filter(i -> interval.equals(Interval.YTD) || i.getLocalDateTime().isAfter(marketOpen))
-                            .map(i -> new XYChart.Data<String, Number>(DataManager.formatByInterval(i.getLocalDateTime(), interval), i.getClose()))
-                            .toList();
+                    .parallel()
+                    .filter(i -> interval.equals(Interval.YTD) || i.getLocalDateTime().isAfter(marketOpen))
+                    //.filter(i -> !interval.equals(Interval.YTD) || i.getLocalDateTime().getDayOfMonth() == 1)
+                    .map(i -> new XYChart.Data<String, Number>(DataManager.formatByInterval(i.getLocalDateTime(), interval), i.getClose()))
+                    .toList();
 
-            if (interval == Interval.YTD) {
-                List<XYChart.Data<String, Number>> limited = new ArrayList<>();
-                for (int i = 0; i < points.size(); i++)
-                    if (i % 50 == 0)
-                        limited.add(points.get(i));
-                points = limited;
-            }
             var data = FXCollections.observableList(List.of(new XYChart.Series<>(FXCollections.observableList(points))));
 
             if (!points.isEmpty()) {
-                List<Double> yRange = points.stream().map(XYChart.Data::getYValue).map(Number::doubleValue).sorted().toList();
+                List<Double> yRange = points.stream().parallel().map(XYChart.Data::getYValue).map(Number::doubleValue).sorted().toList();
                 ((NumberAxis) lineChart.getYAxis()).setLowerBound(Math.floor(yRange.get(0)));
                 ((NumberAxis) lineChart.getYAxis()).setUpperBound(Math.ceil(yRange.get(yRange.size() - 1)));
                 lineChart.setData(data);
@@ -161,7 +160,6 @@ public class StockPageController {
             throw new RuntimeException(e);
         }
     }
-    // FIXME: 10/18/2022
     @FXML
     void buyAction(ActionEvent event) {
         if (!amountField.getText().isEmpty() && Integer.parseInt(amountField.getText()) != 0) {
@@ -172,8 +170,6 @@ public class StockPageController {
             }
         }
     }
-
-    // FIXME: 10/18/2022
     @FXML
     void sellAction(ActionEvent event) {
         if (!amountField.getText().isEmpty() && Integer.parseInt(amountField.getText()) != 0) {

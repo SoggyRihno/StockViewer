@@ -19,7 +19,6 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardOpenOption;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -74,10 +73,10 @@ public class DataManager {
         return initial;
     }
 
-    public static void clear() throws IOException {
-        Files.newInputStream(ORDER_PATH, StandardOpenOption.TRUNCATE_EXISTING);
-        loadJson();
+    public static void clear(){
+        orders = new ArrayList<>();
         saveJson();
+        loadJson();
     }
 
     public static void saveJson() {
