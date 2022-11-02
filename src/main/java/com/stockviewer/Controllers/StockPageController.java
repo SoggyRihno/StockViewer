@@ -1,14 +1,14 @@
 package com.stockviewer.Controllers;
 
 import com.stockviewer.StockViewer;
-import com.stockviewer.data.DataManager;
-import com.stockviewer.data.Interval;
-import com.stockviewer.data.wrappers.StockData;
-import com.stockviewer.data.wrappers.StockDataPoint;
-import com.stockviewer.exceptions.API.APIException;
-import com.stockviewer.exceptions.Poor.InsufficientFundsException;
-import com.stockviewer.exceptions.Poor.NoStockException;
-import com.stockviewer.exceptions.Poor.PoorException;
+import com.stockviewer.Functionality.DataManager;
+import com.stockviewer.Functionality.Interval;
+import com.stockviewer.Functionality.wrappers.StockData;
+import com.stockviewer.Functionality.wrappers.StockDataPoint;
+import com.stockviewer.Exceptions.API.APIException;
+import com.stockviewer.Exceptions.Poor.InsufficientFundsException;
+import com.stockviewer.Exceptions.Poor.NoStockException;
+import com.stockviewer.Exceptions.Poor.PoorException;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.event.ActionEvent;
@@ -143,7 +143,7 @@ public class StockPageController {
             List<XYChart.Data<String, Number>> points = stockData.getData().stream()
                     .parallel()
                     .filter(i -> interval.equals(Interval.YTD) || i.getLocalDateTime().isAfter(marketOpen))
-                    //.filter(i -> !interval.equals(Interval.YTD) || i.getLocalDateTime().getDayOfMonth() == 1)
+                    .filter(i -> !interval.equals(Interval.YTD) || i.getLocalDateTime().getDayOfMonth() == 1)
                     .map(i -> new XYChart.Data<String, Number>(DataManager.formatByInterval(i.getLocalDateTime(), interval), i.getClose()))
                     .toList();
 

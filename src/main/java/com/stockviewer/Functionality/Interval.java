@@ -1,4 +1,4 @@
-package com.stockviewer.data;
+package com.stockviewer.Functionality;
 
 public enum Interval {
     ONE_DAY("1-Day", "&function=TIME_SERIES_INTRADAY&interval=5min", 1),

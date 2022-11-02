@@ -1,13 +1,13 @@
-package com.stockviewer.data;
+package com.stockviewer.Functionality;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 import com.stockviewer.StockViewer;
-import com.stockviewer.exceptions.API.APIException;
-import com.stockviewer.exceptions.Poor.InsufficientFundsException;
-import com.stockviewer.exceptions.Poor.NoStockException;
-import com.stockviewer.exceptions.Poor.PoorException;
+import com.stockviewer.Exceptions.API.APIException;
+import com.stockviewer.Exceptions.Poor.InsufficientFundsException;
+import com.stockviewer.Exceptions.Poor.NoStockException;
+import com.stockviewer.Exceptions.Poor.PoorException;
 
 import java.io.FileWriter;
 import java.io.IOException;
@@ -62,7 +62,6 @@ public class DataManager {
         ses.scheduleWithFixedDelay(DataManager::saveJson, 5, 5, TimeUnit.MINUTES);
         ses.scheduleWithFixedDelay(DataManager::cleanCache, 1, 1, TimeUnit.MINUTES);
     }
-
 
     public static void setAPIKey(String apiKey) {
         API_KEY = apiKey;

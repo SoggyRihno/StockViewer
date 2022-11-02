@@ -1,7 +1,7 @@
-package com.stockviewer.data.wrappers;
+package com.stockviewer.Functionality.wrappers;
 
 import com.google.gson.JsonObject;
-import com.stockviewer.data.DataManager;
+import com.stockviewer.Functionality.DataManager;
 
 import java.time.LocalDateTime;
 

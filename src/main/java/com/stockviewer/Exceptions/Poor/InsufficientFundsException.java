@@ -1,4 +1,4 @@
-package com.stockviewer.exceptions.Poor;
+package com.stockviewer.Exceptions.Poor;
 
 public class InsufficientFundsException extends PoorException{
     public InsufficientFundsException() {

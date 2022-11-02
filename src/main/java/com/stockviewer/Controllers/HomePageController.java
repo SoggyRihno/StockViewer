@@ -1,11 +1,12 @@
 package com.stockviewer.Controllers;
 
+import com.stockviewer.Functionality.DataManager;
+import com.stockviewer.Functionality.Interval;
+import com.stockviewer.Functionality.Order;
+import com.stockviewer.Functionality.SellOrder;
 import com.stockviewer.StockViewer;
-import com.stockviewer.data.DataManager;
-import com.stockviewer.data.Interval;
-import com.stockviewer.data.Order;
-import com.stockviewer.data.SellOrder;
 import javafx.collections.FXCollections;
+import javafx.event.Event;
 import javafx.event.EventType;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -71,11 +72,8 @@ public class HomePageController {
         lineChart = new LineChart<>(xAxis, yAxis);
         lineChart.setCreateSymbols(false);
         chartBox.getChildren().add(lineChart);
-
-        searchTextField.setOnKeyPressed(keyEvent -> {
-            if (keyEvent.getCode().equals(KeyCode.ENTER))
-                search();
-        });
+        portfolioList.setEditable(false);
+        searchTextField.setOnKeyPressed(keyEvent -> {if (keyEvent.getCode().equals(KeyCode.ENTER)) search();});
         copeMenuItem.addEventHandler(EventType.ROOT, event -> cope());
         APIMenuItem.addEventHandler(EventType.ROOT, event -> setAPIKey());
         resetMenuItem.addEventHandler(EventType.ROOT, event -> {
@@ -102,17 +100,29 @@ public class HomePageController {
                     }
                 }
             }
+            updateList();
+            updateChart();
         });
         searchButton.setOnAction(actionEvent -> search());
         for (Interval value : Interval.values())
             rangeChoiceBox.getItems().add(value.toString());
         rangeChoiceBox.getSelectionModel().select(0);
         rangeChoiceBox.setOnAction(actionEvent -> updateChart());
+        portfolioList.setOnMouseClicked(mouseEvent -> {
+            String selected = portfolioList.getSelectionModel().getSelectedItem();
+            search(selected.substring(0,selected.indexOf(' ')));
+        });
+        updateList();
         updateChart();
     }
 
-    void search() {
-        if (searchTextField.getText() == null || searchTextField.getText().isEmpty())
+    void search(){
+        if (searchTextField != null)
+            search(searchTextField.getText());
+    }
+
+    void search(String symbol) {
+        if (symbol == null || symbol.isEmpty())
             return;
         try {
             FXMLLoader loader = new FXMLLoader(StockViewer.class.getResource("XML/StockPage.fxml"));
@@ -136,6 +146,17 @@ public class HomePageController {
             DataManager.setAPIKey(result.get());
         else
             new Alert(Alert.AlertType.NONE, "API key was empty or invalid", ButtonType.OK).show();
+    }
+
+    void updateList(){
+        List<Order> orders = DataManager.getOrders();
+        if(!orders.isEmpty()){
+            portfolioList.setItems(FXCollections.observableList(orders
+                    .stream()
+                    .map(Order::toString)
+                    .toList()
+            ));
+        }
     }
 
     void updateChart() {
@@ -178,11 +199,9 @@ public class HomePageController {
     private void cope() {
         Alert alert = new Alert(Alert.AlertType.NONE, ":(", ButtonType.OK, ButtonType.NO);
         alert.setTitle("That sounds like a personal problem");
-        alert.setOnHiding(i -> {
-            i.consume();
-            alert.setX(Math.random() * alert.getX());
-            alert.setY(Math.random() * alert.getX());
-        });
+        alert.setX(1000 * Math.random());
+        alert.setY(1000 * Math.random());
+        alert.setOnHiding(Event::consume);
         Optional<ButtonType> result = alert.showAndWait();
         if(result.isPresent() && result.get().equals(ButtonType.NO))
             cope();

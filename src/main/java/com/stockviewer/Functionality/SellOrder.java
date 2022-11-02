@@ -1,4 +1,4 @@
-package com.stockviewer.data;
+package com.stockviewer.Functionality;
 
 public class SellOrder extends Order{
     public SellOrder(int amount, double price, String symbol) {

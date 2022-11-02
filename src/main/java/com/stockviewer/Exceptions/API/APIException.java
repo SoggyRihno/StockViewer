@@ -1,4 +1,4 @@
-package com.stockviewer.exceptions.API;
+package com.stockviewer.Exceptions.API;
 
 public class APIException extends Exception{
 

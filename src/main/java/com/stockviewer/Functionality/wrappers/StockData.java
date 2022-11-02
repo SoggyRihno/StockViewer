@@ -1,12 +1,12 @@
-package com.stockviewer.data.wrappers;
+package com.stockviewer.Functionality.wrappers;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import com.stockviewer.data.DataManager;
-import com.stockviewer.data.Interval;
-import com.stockviewer.exceptions.API.APIException;
-import com.stockviewer.exceptions.API.InvalidCallException;
-import com.stockviewer.exceptions.API.InvalidKeyException;
+import com.stockviewer.Functionality.DataManager;
+import com.stockviewer.Functionality.Interval;
+import com.stockviewer.Exceptions.API.APIException;
+import com.stockviewer.Exceptions.API.InvalidCallException;
+import com.stockviewer.Exceptions.API.InvalidKeyException;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.concurrent.ExecutionException;

@@ -1,4 +1,4 @@
-package com.stockviewer.data;
+package com.stockviewer.Functionality;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
