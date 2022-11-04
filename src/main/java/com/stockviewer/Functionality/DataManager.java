@@ -30,16 +30,19 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class DataManager {
-    private static final ScheduledExecutorService ses = Executors.newScheduledThreadPool(3);
     private static final String URL_FORMAT_STRING = "https://www.alphavantage.co/query?apikey=%s&datatype=json&symbol=%s%s";
-    private static Path ORDER_PATH = Path.of("src/main/resources/com/stockviewer/Data/orders.json");
+    private static final Path ORDER_PATH = Path.of("src/main/resources/com/stockviewer/Data/orders.json");
     private static final Path DATA_PATH = Path.of("src/main/resources/com/stockviewer/Data/data.json");
-    private static final List<Runnable> queue = new ArrayList<>();
-    private static long rateLimitedUntil = 0;
     private static String API_KEY = "";
+    private static double initial = 100000;
     private static List<Order> orders = new ArrayList<>();
     private static Map<String, String> cache = new HashMap<>();
-    private static double initial = 100000;
+    private static final ScheduledExecutorService ses = Executors.newScheduledThreadPool(3);
+    private static final List<Runnable> queue = new ArrayList<>();
+    private static long rateLimitedUntil = 0;
+    private static final Gson gson = new GsonBuilder().setPrettyPrinting().create();
+    private static final Type mapType = new TypeToken<Map<String, Object>>() {}.getType();
+    private static final Type listType = new TypeToken<ArrayList<Order>>() {}.getType();
     private static final DateTimeFormatter dateTimeFormatter = new DateTimeFormatterBuilder()
             .appendPattern("yyyy-MM-dd")
             .optionalStart()
@@ -48,11 +51,6 @@ public class DataManager {
             .parseDefaulting(ChronoField.HOUR_OF_DAY, 0)
             .parseDefaulting(ChronoField.MINUTE_OF_HOUR, 0)
             .toFormatter();
-    private static final Gson gson = new GsonBuilder().setPrettyPrinting().create();
-    private static final Type mapType = new TypeToken<Map<String, Object>>() {
-    }.getType();
-    private static final Type listType = new TypeToken<ArrayList<Order>>() {
-    }.getType();
 
     static {
         loadJson();

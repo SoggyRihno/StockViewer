@@ -13,14 +13,14 @@
 
 <BorderPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="400.0" prefWidth="600.0" stylesheets="@Default.css" xmlns="http://javafx.com/javafx/18" xmlns:fx="http://javafx.com/fxml/1">
     <top>
-        <ToolBar prefHeight="40.0" prefWidth="200.0" style="-fx-border-width: 0 0 1 0; -fx-border-color: #9e9e9e;" BorderPane.alignment="CENTER">
+        <ToolBar prefHeight="40.0" prefWidth="200.0" style="-fx-border-width: 1 1 0 1; -fx-border-color: #9e9e9e;" BorderPane.alignment="CENTER">
             <Button fx:id="backButton" mnemonicParsing="false" style="-fx-border-color: #9e9e9e;" text="Back" />
         </ToolBar>
     </top>
     <center>
         <VBox prefHeight="200.0" prefWidth="100.0" BorderPane.alignment="CENTER">
-            <HBox prefHeight="100.0" prefWidth="200.0">
-                <VBox alignment="TOP_CENTER" prefHeight="109.0" prefWidth="254.0">
+            <HBox prefHeight="100.0" prefWidth="200.0" style="-fx-border-width: 1 1 0 1; -fx-border-color: #9e9e9e;">
+                <VBox alignment="TOP_CENTER" prefHeight="109.0" prefWidth="282.0">
                     <Label fx:id="symbolLabel" alignment="CENTER" contentDisplay="TOP" prefHeight="75.0" prefWidth="134.0" text="XYZ">
                         <font>
                             <Font size="52.0" />
@@ -32,7 +32,7 @@
                         </font>
                     </Label>
                 </VBox>
-                <VBox alignment="CENTER_LEFT" layoutX="10.0" layoutY="10.0" prefHeight="109.0" prefWidth="273.0">
+                <VBox alignment="CENTER_LEFT" layoutX="10.0" layoutY="10.0" prefHeight="109.0" prefWidth="280.0">
                     <Label fx:id="changeLabel" alignment="CENTER" contentDisplay="CENTER" prefHeight="43.0" prefWidth="283.0" text="+ ??.?? (+??.??%)">
                         <font>
                             <Font size="29.0" />
@@ -40,13 +40,13 @@
                     </Label>
                 </VBox>
             </HBox>
-            <HBox prefHeight="256.0" prefWidth="600.0">
-                <VBox fx:id="chartBox" alignment="CENTER" prefHeight="200.0" prefWidth="100.0" HBox.hgrow="ALWAYS">
-                    <ChoiceBox fx:id="graphChoiceBox" prefWidth="150.0" />
+            <HBox prefHeight="256.0" prefWidth="600.0" style="-fx-border-width: 1 1 1 1; -fx-border-color: #9e9e9e;">
+                <VBox fx:id="chartBox" alignment="TOP_CENTER" prefHeight="200.0" prefWidth="100.0" HBox.hgrow="ALWAYS">
+                    <ChoiceBox fx:id="graphChoiceBox" prefHeight="0.0" prefWidth="150.0" style="-fx-border-color: #9e9e9e; -fx-border-width: 0 1 1 1;" />
                 </VBox>
-                <VBox alignment="CENTER" prefHeight="251.0" prefWidth="152.0">
+                <VBox alignment="CENTER" prefHeight="251.0" prefWidth="152.0" style="-fx-border-width: 0 0 0 1; -fx-border-color: #9e9e9e;">
                     <HBox alignment="CENTER" prefHeight="51.0" prefWidth="152.0" VBox.vgrow="NEVER">
-                        <Label alignment="CENTER" prefHeight="21.0" prefWidth="64.0" text="Open: " HBox.hgrow="NEVER">
+                        <Label alignment="CENTER" prefHeight="21.0" prefWidth="65.0" text="Open: " HBox.hgrow="NEVER">
                             <font>
                                 <Font size="15.0" />
                             </font>
@@ -71,16 +71,17 @@
                             </font>
                         </Label>
                     </HBox>
-                    <VBox alignment="CENTER" prefHeight="110.0" prefWidth="144.0">
-                        <VBox alignment="CENTER" prefHeight="31.0" prefWidth="152.0">
-                            <children>
-                                <TextField fx:id="amountField" alignment="CENTER" prefHeight="25.0" prefWidth="112.0" VBox.vgrow="NEVER" />
-                            </children>
-                        </VBox>
-                        <HBox alignment="CENTER" prefHeight="40.0" prefWidth="152.0">
-                            <Button fx:id="sellButton" mnemonicParsing="false" onAction="#sellAction" prefHeight="25.0" prefWidth="42.0" style="-fx-border-radius: 0; -fx-border-color: #9e9e9e; -fx-border-width: 1 0 1 1;" text="Sell" />
-                            <Button fx:id="buyButton" mnemonicParsing="false" onAction="#buyAction" style="-fx-border-radius: 0; -fx-border-color: #9e9e9e; -fx-border-width: 1 1 1 1;" text="Buy" />
+                    <VBox alignment="CENTER" prefHeight="118.0" prefWidth="151.0">
+                          <TextField fx:id="amountField" alignment="CENTER" prefHeight="39.0" prefWidth="151.0" promptText="ammount" VBox.vgrow="NEVER" />
+                        <HBox alignment="TOP_CENTER" prefHeight="40.0" prefWidth="152.0">
+                            <Button fx:id="sellButton" mnemonicParsing="false" onAction="#sellAction" prefHeight="40.0" prefWidth="76.0" style="-fx-border-radius: 0; -fx-border-color: #9e9e9e; -fx-border-width: 1 0 1 0;" text="Sell" />
+                            <Button fx:id="buyButton" mnemonicParsing="false" onAction="#buyAction" prefHeight="40.0" prefWidth="80.0" style="-fx-border-radius: 0; -fx-border-color: #9e9e9e; -fx-border-width: 1 1 1 1;" text="Buy" />
                         </HBox>
+                  <Label fx:id="resultLabel" alignment="CENTER" contentDisplay="TEXT_ONLY" prefHeight="40.0" prefWidth="151.0">
+                     <font>
+                        <Font size="15.0" />
+                     </font>
+                  </Label>
                     </VBox>
                 </VBox>
             </HBox>

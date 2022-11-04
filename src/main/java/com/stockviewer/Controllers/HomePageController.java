@@ -71,6 +71,7 @@ public class HomePageController {
 
         lineChart = new LineChart<>(xAxis, yAxis);
         lineChart.setCreateSymbols(false);
+
         chartBox.getChildren().add(lineChart);
         portfolioList.setEditable(false);
         searchTextField.setOnKeyPressed(keyEvent -> {if (keyEvent.getCode().equals(KeyCode.ENTER)) search();});
@@ -110,7 +111,8 @@ public class HomePageController {
         rangeChoiceBox.setOnAction(actionEvent -> updateChart());
         portfolioList.setOnMouseClicked(mouseEvent -> {
             String selected = portfolioList.getSelectionModel().getSelectedItem();
-            search(selected.substring(0,selected.indexOf(' ')));
+            if(selected !=null)
+                search(selected.substring(0,selected.indexOf(' ')));
         });
         updateList();
         updateChart();
@@ -125,7 +127,7 @@ public class HomePageController {
         if (symbol == null || symbol.isEmpty())
             return;
         try {
-            FXMLLoader loader = new FXMLLoader(StockViewer.class.getResource("XML/StockPage.fxml"));
+            FXMLLoader loader = new FXMLLoader(StockViewer.class.getResource("Pages/StockPage.fxml"));
             loader.setController(new StockPageController(searchTextField.getText()));
             StockViewer.getStage().setScene(new Scene(loader.load()));
         } catch (IOException e) {

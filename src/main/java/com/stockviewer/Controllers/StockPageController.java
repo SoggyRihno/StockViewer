@@ -1,17 +1,13 @@
 package com.stockviewer.Controllers;
 
-import com.stockviewer.StockViewer;
+import com.stockviewer.Exceptions.API.APIException;
 import com.stockviewer.Functionality.DataManager;
 import com.stockviewer.Functionality.Interval;
 import com.stockviewer.Functionality.wrappers.StockData;
 import com.stockviewer.Functionality.wrappers.StockDataPoint;
-import com.stockviewer.Exceptions.API.APIException;
-import com.stockviewer.Exceptions.Poor.InsufficientFundsException;
-import com.stockviewer.Exceptions.Poor.NoStockException;
-import com.stockviewer.Exceptions.Poor.PoorException;
+import com.stockviewer.StockViewer;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
-import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
@@ -54,6 +50,9 @@ public class StockPageController {
     @FXML
     private TextField amountField;
     @FXML
+    private TextField resultLabel;
+    @FXML
+
     private VBox chartBox;
     private final ScheduledExecutorService ses = Executors.newSingleThreadScheduledExecutor();
     private final String symbol;
@@ -94,8 +93,7 @@ public class StockPageController {
         ses.scheduleWithFixedDelay(() -> Platform.runLater(() -> {
             try {
                 update();
-            } catch (APIException ignored) {
-            }
+            } catch (APIException ignored) {}
         }), 1, 1, TimeUnit.MINUTES);
     }
 
@@ -114,14 +112,14 @@ public class StockPageController {
         try {
             currentData = StockData.newStockData(symbol);
         } catch (InterruptedException | ExecutionException e) {
-            throw new RuntimeException(e);
+            e.printStackTrace();
         }
     }
 
     public void back() {
         ses.shutdownNow();
         try {
-            FXMLLoader loader = new FXMLLoader(StockViewer.class.getResource("XML/HomePage.fxml"));
+            FXMLLoader loader = new FXMLLoader(StockViewer.class.getResource("Pages/HomePage.fxml"));
             StockViewer.getStage().setScene(new Scene(loader.load()));
         } catch (IOException e) {
             e.printStackTrace();
@@ -157,9 +155,11 @@ public class StockPageController {
             }
             lineChart.setTitle(String.valueOf(interval));
         } catch (ExecutionException | InterruptedException | APIException e) {
-            throw new RuntimeException(e);
+            e.printStackTrace();
         }
     }
+
+    /*
     @FXML
     void buyAction(ActionEvent event) {
         if (!amountField.getText().isEmpty() && Integer.parseInt(amountField.getText()) != 0) {
@@ -182,4 +182,8 @@ public class StockPageController {
             }
         }
     }
+     */
+
+
+
 }

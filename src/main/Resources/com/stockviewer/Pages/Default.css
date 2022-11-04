@@ -1,8 +1,14 @@
 {
    -fx-background-color: #5b5b5b;
    -fx-text-fill: white;
+   -fx-opacity : 70;
+
 } .menu {
     -fx-border-width : 0 1 0 0;
     -fx-border-color : #9e9e9e;
+}
+.borderpane{
+   -fx-background-image: url("../Images/gradientSquare.png");
+
 }
 
