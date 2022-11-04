@@ -205,7 +205,7 @@ public class HomePageController {
         alert.setY(1000 * Math.random());
         alert.setOnHiding(Event::consume);
         Optional<ButtonType> result = alert.showAndWait();
-        if(result.isPresent() && result.get().equals(ButtonType.NO))
+        if(result.isEmpty() || result.get().equals(ButtonType.NO))
             cope();
     }
 }

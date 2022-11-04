@@ -4,10 +4,6 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 import com.stockviewer.StockViewer;
-import com.stockviewer.Exceptions.API.APIException;
-import com.stockviewer.Exceptions.Poor.InsufficientFundsException;
-import com.stockviewer.Exceptions.Poor.NoStockException;
-import com.stockviewer.Exceptions.Poor.PoorException;
 
 import java.io.FileWriter;
 import java.io.IOException;
@@ -24,7 +20,10 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeFormatterBuilder;
 import java.time.temporal.ChronoField;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -41,8 +40,10 @@ public class DataManager {
     private static final List<Runnable> queue = new ArrayList<>();
     private static long rateLimitedUntil = 0;
     private static final Gson gson = new GsonBuilder().setPrettyPrinting().create();
-    private static final Type mapType = new TypeToken<Map<String, Object>>() {}.getType();
-    private static final Type listType = new TypeToken<ArrayList<Order>>() {}.getType();
+    private static final Type mapType = new TypeToken<Map<String, Object>>() {
+    }.getType();
+    private static final Type listType = new TypeToken<ArrayList<Order>>() {
+    }.getType();
     private static final DateTimeFormatter dateTimeFormatter = new DateTimeFormatterBuilder()
             .appendPattern("yyyy-MM-dd")
             .optionalStart()
@@ -61,19 +62,37 @@ public class DataManager {
         ses.scheduleWithFixedDelay(DataManager::cleanCache, 1, 1, TimeUnit.MINUTES);
     }
 
+    public static double getInitial() {
+        return initial;
+    }
+
+
     public static void setAPIKey(String apiKey) {
         API_KEY = apiKey;
         saveJson();
     }
 
-    public static double getInitial() {
-        return initial;
-    }
-
-    public static void clear(){
+    public static void clear() {
         orders = new ArrayList<>();
         saveJson();
         loadJson();
+    }
+
+    public static void cleanCache() {
+        cache = cache.keySet().stream().limit(50).collect(Collectors.toMap(Function.identity(), i -> cache.get(i)));
+    }
+
+    public static void stop() {
+        saveJson();
+        ses.shutdown();
+    }
+
+    public static List<Order> getOrders() {
+        return orders;
+    }
+
+    public static DateTimeFormatter getDateTimeFormatter() {
+        return dateTimeFormatter;
     }
 
     public static void saveJson() {
@@ -123,13 +142,8 @@ public class DataManager {
         if (importedData != null) {
             orders = importedData;
             saveJson();
-        }else
+        } else
             Files.write(path, current);
-    }
-
-    public static void stop() {
-        saveJson();
-        ses.shutdown();
     }
 
     private static String getSync(String url) throws ExecutionException, InterruptedException {
@@ -141,9 +155,9 @@ public class DataManager {
     public static CompletableFuture<String> getStockData(String symbol, Interval interval) {
         CompletableFuture<String> result = new CompletableFuture<>();
         String url = String.format(URL_FORMAT_STRING, API_KEY, symbol, interval.getApiValue());
-        if (cache.containsKey(url)) {
+        if (cache.containsKey(url))
             result.completeAsync(() -> cache.get(url));
-        } else {
+        else {
             Runnable task = () -> {
                 try {
                     String raw = getSync(url);
@@ -152,79 +166,49 @@ public class DataManager {
                 } catch (ExecutionException e) {
                     e.printStackTrace();
                 } catch (InterruptedException e) {
-                    throw new RuntimeException(new APIException("Api timed out with url : " + url));
+                    System.out.println("Api timed out with url : " + url);
+                    e.printStackTrace();
                 }
             };
-            //time shouldn't change between conditions or else possible negative schedule
             long current = System.nanoTime();
-            if (rateLimitedUntil - current > 0) {
+            if (rateLimitedUntil - current > 0)
                 ses.submit(task);
-            } else {
+            else
                 ses.schedule(task, rateLimitedUntil - current, TimeUnit.NANOSECONDS);
-            }
             rateLimitedUntil = (long) (current + 1.2E9);
         }
         return result;
-    }
-
-    public static void cleanCache() {
-        cache = cache.keySet().stream().limit(50).collect(Collectors.toMap(Function.identity(), i -> cache.get(i)));
     }
 
     public static double calculateCurrent() {
         return initial + orders.stream().mapToDouble(i -> i.getBuyPrice() * i.getAmount() * (i instanceof SellOrder ? -1 : 1)).sum();
     }
 
-    public static Map<String, Integer> getOwned() {
-        Map<String, Integer> map = new HashMap<>();
-        orders.stream()
-                .filter(i -> !(i instanceof SellOrder))
-                .forEach(i -> map.compute(i.getSymbol(), (k, v) -> map.getOrDefault(i.getSymbol(), 0) + i.getAmount()));
-        return map;
+    public static int getOwned(String symbol) {
+        int owned = 0;
+        for (Order order : orders)
+            if (order.getSymbol().equals(symbol))
+                owned += (order instanceof SellOrder ? -1 : 1) * order.getAmount();
+        return owned;
     }
 
-    public static void buy(int amount, double buyPrice, String symbol) throws InsufficientFundsException {
-        if (amount * buyPrice > calculateCurrent())
-            throw new InsufficientFundsException();
-        orders.add(new Order(amount, buyPrice, symbol));
+    public static boolean buy(int amount, double buyPrice, String symbol) {
+        if (amount * buyPrice <= calculateCurrent())
+            return orders.add(new Order(amount, buyPrice, symbol));
+        return false;
     }
 
-    public static void sell(UUID uuid) throws PoorException {
-        Order order = orders.stream()
-                .filter(i -> i.getUuid().equals(uuid))
-                .filter(i -> !(i instanceof SellOrder))
-                .findFirst()
-                .orElse(null);
-        if (order != null)
-            sell(order.getAmount(), order.getBuyPrice(), order.getSymbol());
+    public static boolean sell(int amount, double buyPrice, String symbol) {
+        if (amount <= getOwned(symbol))
+            return orders.add(new SellOrder(amount, buyPrice, symbol));
+        return false;
     }
 
-    public static void sell(int amount, double buyPrice, String symbol) throws PoorException {
-        int ownedAmount = getOwned().getOrDefault(symbol, 0);
-        if (ownedAmount >= amount) {
-            if (amount * buyPrice <= calculateCurrent()) {
-                orders.add(new SellOrder(amount, buyPrice, symbol));
-            } else {
-                throw new InsufficientFundsException();
-            }
-        }else {
-            throw new NoStockException();
-        }
-    }
-
-    public static String formatByInterval(LocalDateTime time, Interval interval){
-       return switch (interval) {
+    public static String formatByInterval(LocalDateTime time, Interval interval) {
+        return switch (interval) {
             case ONE_DAY -> time.format(DateTimeFormatter.ofPattern("HH:mm"));
             case YTD -> time.format(DateTimeFormatter.ofPattern("MMM/dd/yyyy"));
             default -> time.format(DateTimeFormatter.ofPattern("MMM/dd HH:mm"));
         };
-    }
-
-    public static List<Order> getOrders() {
-        return orders;
-    }
-
-    public static DateTimeFormatter getDateTimeFormatter() {
-        return dateTimeFormatter;
     }
 }

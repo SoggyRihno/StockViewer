@@ -17,7 +17,7 @@ import javafx.scene.chart.NumberAxis;
 import javafx.scene.chart.XYChart;
 import javafx.scene.control.*;
 import javafx.scene.layout.VBox;
-
+import javafx.scene.text.Text;
 import java.io.IOException;
 import java.time.Duration;
 import java.time.LocalDate;
@@ -48,14 +48,15 @@ public class StockPageController {
     @FXML
     private Label volumeLabel;
     @FXML
+    private Text resultText;
+    @FXML
     private TextField amountField;
     @FXML
-    private TextField resultLabel;
-    @FXML
-
     private VBox chartBox;
+
     private final ScheduledExecutorService ses = Executors.newSingleThreadScheduledExecutor();
     private final String symbol;
+    private long lastUpdated = System.currentTimeMillis();
     private StockData currentData;
     private LineChart<String, Number> lineChart;
 
@@ -83,32 +84,33 @@ public class StockPageController {
         graphChoiceBox.setOnAction(actionEvent -> updateChart());
         amountField.textProperty().addListener((observable, oldValue, newValue) -> amountField.setText(newValue.replaceAll("\\D", "")));
         backButton.setOnAction(actionEvent -> back());
+        buyButton.setOnAction(actionEvent -> buy());
+        sellButton.setOnAction(actionEvent -> sell());
         symbolLabel.setText(symbol.toUpperCase());
         try {
             update();
         } catch (APIException e) {
             back();
         }
-
         ses.scheduleWithFixedDelay(() -> Platform.runLater(() -> {
             try {
                 update();
-            } catch (APIException ignored) {}
+            } catch (APIException ignored) {
+            }
         }), 1, 1, TimeUnit.MINUTES);
     }
 
     void update() throws APIException {
-        LocalDateTime date = LocalDateTime.now().minusDays(1);
         loadData();
         openLabel.setText(String.valueOf(currentData.getLatestOpen()));
-        volumeLabel.setText(String.valueOf(currentData.getDailyVolume(date)));
+        volumeLabel.setText(String.valueOf(currentData.getDailyVolume(LocalDateTime.now().minusDays(1))));
         changeLabel.setText(currentData.getLatestChange());
         changeLabel.setStyle(changeLabel.getText().contains("-") ? "-fx-text-fill: red" : "-fx-text-fill: green");
         dateLabel.setText(currentData.getLatestTimeFormatted());
         updateChart();
     }
 
-    private void loadData() throws APIException {
+    void loadData() throws APIException {
         try {
             currentData = StockData.newStockData(symbol);
         } catch (InterruptedException | ExecutionException e) {
@@ -116,7 +118,7 @@ public class StockPageController {
         }
     }
 
-    public void back() {
+    void back() {
         ses.shutdownNow();
         try {
             FXMLLoader loader = new FXMLLoader(StockViewer.class.getResource("Pages/HomePage.fxml"));
@@ -126,12 +128,12 @@ public class StockPageController {
         }
     }
 
-    private void showError(String message) {
+    void showError(String message) {
         Alert alert = new Alert(Alert.AlertType.NONE, message, ButtonType.OK);
         alert.showAndWait();
     }
 
-    public void updateChart() {
+    void updateChart() {
         Interval interval = Interval.fromString(graphChoiceBox.getSelectionModel().getSelectedItem());
         try {
             StockData stockData = interval.equals(Interval.ONE_DAY) ? currentData : StockData.newStockData(symbol, interval);
@@ -159,31 +161,36 @@ public class StockPageController {
         }
     }
 
-    /*
-    @FXML
-    void buyAction(ActionEvent event) {
-        if (!amountField.getText().isEmpty() && Integer.parseInt(amountField.getText()) != 0) {
-            try {
-                DataManager.buy(Integer.parseInt(amountField.getText()), currentData.getLatestOpen(), symbol);
-            } catch (InsufficientFundsException e) {
-                showError("You are to poor :(");
-            }
+    void printResult(String string, String color) {
+        lastUpdated = System.currentTimeMillis();
+        resultText.setText(string);
+        resultText.setStyle("-fx-text-fill: " + color);
+
+        ses.schedule(() -> Platform.runLater(() -> {
+            if (System.currentTimeMillis() - lastUpdated >= 2500)
+                resultText.setText("");
+        }), 3, TimeUnit.SECONDS);
+    }
+
+    void buy() {
+        if (amountField.getText().isEmpty() || Integer.parseInt(amountField.getText()) != 0)
+            printResult("Amount can't be %n0 or empty", "red");
+        else {
+            if (DataManager.buy(Integer.parseInt(amountField.getText()), currentData.getLatestOpen(), symbol))
+                printResult(String.format("Successfully bought %n%s at %,.2f ", amountField.getText(), currentData.getLatestOpen()), "green");
+            else
+                printResult("You cant afford this L", "red");
         }
     }
-    @FXML
-    void sellAction(ActionEvent event) {
-        if (!amountField.getText().isEmpty() && Integer.parseInt(amountField.getText()) != 0) {
-            try {
-                DataManager.sell(Integer.parseInt(amountField.getText()), currentData.getLatestOpen(), symbol);
-            } catch (NoStockException e) {
-                showError("You don't own enough of this stock");
-            } catch (PoorException e) {
-                showError("You are to poor");
-            }
+
+    void sell() {
+        if (amountField.getText().isEmpty() || Integer.parseInt(amountField.getText()) != 0)
+            printResult("Amount can't be %n0 or empty", "red");
+        else {
+            if (DataManager.sell(Integer.parseInt(amountField.getText()), currentData.getLatestOpen(), symbol))
+                printResult(String.format("Successfully sold %s at %,.2f ", amountField.getText(), currentData.getLatestOpen()), "green");
+            else
+                printResult("You don't own that many L", "red");
         }
     }
-     */
-
-
-
 }

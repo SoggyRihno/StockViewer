@@ -9,6 +9,7 @@ import com.stockviewer.Exceptions.API.InvalidCallException;
 import com.stockviewer.Exceptions.API.InvalidKeyException;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.ExecutionException;
 
 public class StockData {
@@ -77,5 +78,22 @@ public class StockData {
         return String.format("%s (%.2f %%)",
                 difference >= 0 ? String.format("+ %,.2f", difference) : String.format("%,.2f", difference),
                 difference / data.get(data.size() - 2).getOpen() * 100);
+    }
+
+    @Override
+    public int hashCode() {
+        int result = 0;
+        result += 31 * result + symbol.hashCode();
+        result += 31 * result + data.hashCode();
+        return result;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if(obj instanceof StockData sd)
+            return Objects.equals(sd.getSymbol(), symbol) && data.equals(sd.getData());
+        return false;
     }
 }
