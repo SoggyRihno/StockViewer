@@ -49,9 +49,10 @@ public class StockViewer extends Application {
         button.setOnAction(actionEvent -> dialog.close());
         Optional<String> result = dialog.showAndWait();
 
-        if (result.isPresent() && result.get().matches(""))
+        if (result.isPresent() && result.get().matches("")) {
             DataManager.setAPIKey(result.get());
-        else
+        }else {
             forceApiKey();
+        }
     }
 }

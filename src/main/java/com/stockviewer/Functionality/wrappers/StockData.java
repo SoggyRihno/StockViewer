@@ -33,7 +33,7 @@ public class StockData {
             else if (result.contains("Invalid API call"))
                 throw new InvalidCallException(result);
         }
-        String key = json.keySet().stream().filter(j -> !j.equals("Meta Data")).findFirst().orElse(null);
+        String key = json.keySet().stream().filter(i -> !i.equals("Meta Data")).findFirst().orElse(null);
         if(key == null)
             throw new APIException();
 
@@ -59,6 +59,8 @@ public class StockData {
     }
 
     public double getLatestOpen() {
+        if (data.isEmpty())
+            return 0;
         return data.get(data.size() - 1).getOpen();
     }
 

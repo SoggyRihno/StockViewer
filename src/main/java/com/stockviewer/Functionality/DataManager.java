@@ -181,14 +181,14 @@ public class DataManager {
     }
 
     public static double calculateCurrent() {
-        return initial + orders.stream().mapToDouble(i -> i.getBuyPrice() * i.getAmount() * (i instanceof SellOrder ? -1 : 1)).sum();
+        return initial + orders.stream().mapToDouble(Order::getSignedValue).sum();
     }
 
     public static int getOwned(String symbol) {
         int owned = 0;
         for (Order order : orders)
             if (order.getSymbol().equals(symbol))
-                owned += (order instanceof SellOrder ? -1 : 1) * order.getAmount();
+                owned += (order.isSold() ? -1 : 1) * order.getAmount();
         return owned;
     }
 
@@ -200,7 +200,7 @@ public class DataManager {
 
     public static boolean sell(int amount, double buyPrice, String symbol) {
         if (amount <= getOwned(symbol))
-            return orders.add(new SellOrder(amount, buyPrice, symbol));
+            return orders.add(new Order(amount, buyPrice, symbol, true));
         return false;
     }
 
