@@ -91,7 +91,7 @@ public class StockPageController {
         symbolLabel.setText(symbol.toUpperCase());
         if (!update())
             back();
-        //ses.scheduleWithFixedDelay(this::update, 1, 1, TimeUnit.MINUTES);
+        ses.scheduleWithFixedDelay(this::update, 1, 1, TimeUnit.MINUTES);
     }
 
     boolean update() {
