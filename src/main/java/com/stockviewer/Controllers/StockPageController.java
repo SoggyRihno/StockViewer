@@ -77,8 +77,9 @@ public class StockPageController {
 
         lineChart = new LineChart<>(xAxis, yAxis);
         lineChart.setCreateSymbols(false);
-        chartBox.getChildren().add(lineChart);
+        lineChart.setAnimated(false);
 
+        chartBox.getChildren().add(lineChart);
         for (Interval value : Interval.values())
             graphChoiceBox.getItems().add(value.toString());
         graphChoiceBox.getSelectionModel().select(0);
@@ -101,8 +102,8 @@ public class StockPageController {
                 openLabel.setText(String.valueOf(currentData.getLatestOpen()));
                 volumeLabel.setText(String.valueOf(currentData.getDailyVolume(LocalDateTime.now().minusDays(1))));
                 changeLabel.setText(currentData.getLatestChange());
-                changeLabel.setStyle(changeLabel.getText().contains("-") ? "-fx-text-fill: red" : "-fx-text-fill: green");
                 dateLabel.setText(currentData.getLatestTimeFormatted());
+                changeLabel.setStyle(changeLabel.getText().contains("-") ? "-fx-text-fill: red" : "-fx-text-fill: green");
                 updateChart();
             });
         } catch (APIException e) {
@@ -126,7 +127,7 @@ public class StockPageController {
             StockViewer.getStage().setScene(new Scene(loader.load()));
         } catch (IOException e) {
             DataManager.saveJson();
-            //System.exit(-1);
+            System.exit(-1);
         }
     }
 
@@ -144,14 +145,22 @@ public class StockPageController {
                     .map(i -> new XYChart.Data<String, Number>(DataManager.formatByInterval(i.getLocalDateTime(), interval), i.getClose()))
                     .toList();
 
-            var data = FXCollections.observableList(List.of(new XYChart.Series<>(FXCollections.observableList(points))));
+            lineChart.setTitle(String.valueOf(interval));
             if (!points.isEmpty()) {
                 List<Double> yRange = points.stream().parallel().map(XYChart.Data::getYValue).map(Number::doubleValue).sorted().toList();
                 ((NumberAxis) lineChart.getYAxis()).setLowerBound(Math.floor(yRange.get(0)));
                 ((NumberAxis) lineChart.getYAxis()).setUpperBound(Math.ceil(yRange.get(yRange.size() - 1)));
-                lineChart.setData(data);
+
+                if (lineChart.getData() == null)
+                    lineChart.setData(FXCollections.observableArrayList());
+                lineChart.getData().clear();
+                lineChart.getData().add(new XYChart.Series<>());
+
+                XYChart.Series<String, Number> series = lineChart.getData().get(0);
+                points.forEach(i->series.getData().add(i));
+
+
             }
-            lineChart.setTitle(String.valueOf(interval));
         } catch (ExecutionException | InterruptedException | APIException e) {
             e.printStackTrace();
         }

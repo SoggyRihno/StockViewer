@@ -208,7 +208,7 @@ public class DataManager {
         return switch (interval) {
             case ONE_DAY -> time.format(DateTimeFormatter.ofPattern("HH:mm"));
             case YTD -> time.format(DateTimeFormatter.ofPattern("MMM/dd/yyyy"));
-            default -> time.format(DateTimeFormatter.ofPattern("MMM/dd HH:mm"));
+            default ->  time.format(DateTimeFormatter.ofPattern("MMM/dd HH:mm"));
         };
     }
 }

@@ -27,7 +27,7 @@ public class StockViewer extends Application {
         scene.getStylesheets().add(Objects.requireNonNull(getClass().getResource("Pages/Default.css")).toExternalForm());
         stage.setTitle("Stock Viewer");
         stage.setScene(scene);
-        stage.setResizable(false);
+        //stage.setResizable(false);
         stage.show();
     }
 

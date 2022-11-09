@@ -2,14 +2,18 @@
    -fx-background-color: #5b5b5b;
    -fx-text-fill: white;
    -fx-opacity : 70;
-
 } .menu {
     -fx-border-width : 0 1 0 0;
     -fx-border-color : #9e9e9e;
 }
-/*.borderpane{
-   -fx-background-image: url("../Images/gradientSquare.png");
+.list-view, .split-pane {
+    -fx-background-insets: 0;
+    -fx-padding: 0;
+}
+.axis{
+    -fx-tick-label-fill : white;
+}.choice-box {
+    -fx-border-width : 0 1 1 1;
+     -fx-border-color : #9e9e9e;
 
 }
-*/
-.list-view, .split-pane { -fx-background-insets: 0; -fx-padding: 0; }

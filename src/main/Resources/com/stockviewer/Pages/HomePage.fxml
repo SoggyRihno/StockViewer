@@ -12,9 +12,9 @@
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
 
-<BorderPane fx:id="borderPane" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="400.0" prefWidth="600.0" stylesheets="@Default.css" xmlns="http://javafx.com/javafx/18" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.stockviewer.Controllers.HomePageController">
+<BorderPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="400.0" prefWidth="600.0" stylesheets="@Default.css" xmlns="http://javafx.com/javafx/18" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.stockviewer.Controllers.HomePageController">
     <top>
-        <MenuBar fx:id="mainMenuBar" prefHeight="26.0" prefWidth="593.0" style="-fx-border-width: 1 1 1 1; -fx-border-color: #9e9e9e; -fx-padding: 0;" styleClass="darker" useSystemMenuBar="true" BorderPane.alignment="CENTER">
+        <MenuBar fx:id="mainMenuBar" prefHeight="27.0" prefWidth="600.0" style="-fx-border-width: 1 1 1 1; -fx-border-color: #9e9e9e; -fx-padding: 0;" styleClass="darker" useSystemMenuBar="true" BorderPane.alignment="CENTER">
             <Menu fx:id="fileMenu" mnemonicParsing="false" text="File">
                 <MenuItem id="ResetMenuItem" fx:id="resetMenuItem" mnemonicParsing="false" text="Reset" />
                 <MenuItem fx:id="importMenuItem" mnemonicParsing="false" text="Import" />
@@ -39,7 +39,7 @@
             </HBox>
             <VBox prefHeight="200.0" prefWidth="100.0" VBox.vgrow="ALWAYS">
                 <VBox fx:id="chartBox" alignment="TOP_CENTER" prefHeight="349.0" prefWidth="394.0" style="-fx-border-color: #9e9e9e; -fx-border-width: 1 0 0 0;" VBox.vgrow="ALWAYS">
-                    <ChoiceBox fx:id="rangeChoiceBox" prefWidth="150.0" />
+                    <ChoiceBox fx:id="rangeChoiceBox" prefHeight="26.0" prefWidth="108.0" />
                 </VBox>
             </VBox>
         </VBox>

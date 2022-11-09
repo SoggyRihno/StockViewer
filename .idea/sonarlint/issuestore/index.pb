@@ -15,5 +15,3 @@ i
 9.idea/libraries/Maven__org_openjfx_javafx_fxml_win_19.xml,1\9\19ef070ac81d0a4f1ebedb047ca56bbb902ba1ce
 m
 =.idea/libraries/Maven__org_openjfx_javafx_graphics_win_19.xml,6\b\6b8747c9352ab17bd99073f20e474c5882d81dfa
-j
-:src/main/java/com/stockviewer/Functionality/SellOrder.java,e\c\ec0f6413615f97e8dd107ed070ecbf456bd6e26a

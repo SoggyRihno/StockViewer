@@ -71,6 +71,7 @@ public class HomePageController {
 
         lineChart = new LineChart<>(xAxis, yAxis);
         lineChart.setCreateSymbols(false);
+        lineChart.setAnimated(false);
         chartBox.getChildren().add(lineChart);
 
         searchTextField.setOnKeyPressed(keyEvent -> {
@@ -81,8 +82,8 @@ public class HomePageController {
         resetMenuItem.addEventHandler(EventType.ROOT, event -> clearData());
         importMenuItem.addEventHandler(EventType.ROOT, event -> importData());
         searchButton.setOnAction(actionEvent -> search());
-        rangeChoiceBox.setOnAction(actionEvent -> updateChart());
 
+        rangeChoiceBox.setOnAction(actionEvent -> updateChart());
         rangeChoiceBox.setItems(FXCollections.observableList(Arrays.stream(Interval.values()).map(String::valueOf).toList()));
         rangeChoiceBox.getSelectionModel().select(0);
 
@@ -98,9 +99,8 @@ public class HomePageController {
                 super.updateItem(order, empty);
                 if (empty || order == null)
                     setText(null);
-                else {
+                else
                     setText(String.format("%s\t%d\t%,.2f\t%s", order.getSymbol(), order.getAmount(), order.getBuyPrice(), order.isSold() ? "SOLD" : ""));
-                }
             }
         });
         updateList();
@@ -177,8 +177,7 @@ public class HomePageController {
 
     void updateChart() {
         List<Order> orders = DataManager.getOrders();
-        if (orders.isEmpty())
-            return;
+        if (orders.isEmpty()) return;
 
         Interval interval = Interval.fromString(rangeChoiceBox.getSelectionModel().getSelectedItem());
 
@@ -186,10 +185,8 @@ public class HomePageController {
         LocalDateTime earliest = LocalDate.now().minusDays(interval.equals(Interval.YTD) ? --minDay : interval.getRange()).atTime(9, 0);
         List<XYChart.Data<String, Number>> data = new ArrayList<>();
 
-        double starting = DataManager.getInitial();
-        for (Order order : orders)
-            if (LocalDateTime.parse(order.getBuyDate(), DataManager.getDateTimeFormatter()).isAfter(earliest))
-                starting += order.getSignedValue();
+        double starting = DataManager.getInitial() + orders.stream().mapToDouble(Order::getSignedValue).sum();
+
         data.add(new XYChart.Data<>(DataManager.formatByInterval(earliest, interval), starting));
 
         for (int i = 0; i < orders.size(); i++) {
@@ -206,8 +203,14 @@ public class HomePageController {
             List<Double> yRange = data.stream().parallel().map(XYChart.Data::getYValue).map(Number::doubleValue).sorted().toList();
             ((NumberAxis) lineChart.getYAxis()).setLowerBound(Math.floor(yRange.get(0)));
             ((NumberAxis) lineChart.getYAxis()).setUpperBound(Math.ceil(yRange.get(yRange.size() - 1)));
-            lineChart.setData(FXCollections.observableList(List.of(new XYChart.Series<>(FXCollections.observableList(data)))));
-            lineChart.requestFocus();
+
+            if (lineChart.getData() == null)
+                lineChart.setData(FXCollections.observableArrayList());
+            lineChart.getData().clear();
+            lineChart.getData().add(new XYChart.Series<>());
+
+            XYChart.Series<String, Number> series = lineChart.getData().get(0);
+            data.forEach(i->series.getData().add(i));
         }
     }
 
