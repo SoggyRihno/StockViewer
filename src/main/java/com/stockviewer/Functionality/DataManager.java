@@ -33,7 +33,7 @@ public class DataManager {
     private static final Path ORDER_PATH = Path.of("src/main/resources/com/stockviewer/Data/orders.json");
     private static final Path DATA_PATH = Path.of("src/main/resources/com/stockviewer/Data/data.json");
     private static String API_KEY = "";
-    private static double initial = 100000;
+    private static double initial = 10000;
     private static List<Order> orders = new ArrayList<>();
     private static Map<String, String> cache = new HashMap<>();
     private static final ScheduledExecutorService ses = Executors.newScheduledThreadPool(3);
@@ -88,7 +88,7 @@ public class DataManager {
     }
 
     public static List<Order> getOrders() {
-        return orders;
+        return List.copyOf(orders);
     }
 
     public static DateTimeFormatter getDateTimeFormatter() {

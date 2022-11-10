@@ -22,5 +22,29 @@
     "date": "2022-11-04 10:19:46",
     "sold": false,
     "uuid": "2ef93047-ed90-4050-8201-5287bdf88cb7"
+  },
+  {
+    "symbol": "k",
+    "amount": 9,
+    "price": 71.0,
+    "date": "2022-11-10 09:22:28",
+    "sold": true,
+    "uuid": "2855a110-e08e-46af-a951-5a10c2627030"
+  },
+  {
+    "symbol": "k",
+    "amount": 55,
+    "price": 71.0,
+    "date": "2022-11-10 09:24:02",
+    "sold": true,
+    "uuid": "22dc7ce8-7334-4062-ad58-20ac431914a2"
+  },
+  {
+    "symbol": "k",
+    "amount": 55,
+    "price": 71.0,
+    "date": "2022-11-10 09:24:03",
+    "sold": true,
+    "uuid": "5c4c3d3c-aee8-41f7-a86b-9c18523e4df0"
   }
 ]

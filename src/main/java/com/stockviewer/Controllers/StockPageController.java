@@ -158,8 +158,6 @@ public class StockPageController {
 
                 XYChart.Series<String, Number> series = lineChart.getData().get(0);
                 points.forEach(i->series.getData().add(i));
-
-
             }
         } catch (ExecutionException | InterruptedException | APIException e) {
             e.printStackTrace();
@@ -168,17 +166,18 @@ public class StockPageController {
 
     void printResult(String string, String color) {
         lastUpdated = System.currentTimeMillis();
-        resultText.setText(string);
         resultText.setStyle("-fx-text-fill: " + color);
+        resultText.setText(string);
         ses.schedule(() -> Platform.runLater(() -> {
-            if (System.currentTimeMillis() - lastUpdated >= 2500)
+            if (System.currentTimeMillis() - lastUpdated >= 900)
                 resultText.setText("");
-        }), 3, TimeUnit.SECONDS);
+        }), 1, TimeUnit.SECONDS);
     }
 
     void buy() {
-        if (amountField.getText().isEmpty() || Integer.parseInt(amountField.getText()) != 0) {
-            printResult("Amount can't be %n0 or empty", "red");
+        if (amountField.getText().isEmpty() || Integer.parseInt(amountField.getText()) == 0) {
+            printResult("Amount can't be 0 or empty", "red");
+            amountField.setText("");
         } else {
             if (DataManager.buy(Integer.parseInt(amountField.getText()), currentData.getLatestOpen(), symbol)) {
                 printResult(String.format("Successfully bought %n%s at %,.2f ", amountField.getText(), currentData.getLatestOpen()), "green");
@@ -189,8 +188,9 @@ public class StockPageController {
     }
 
     void sell() {
-        if (amountField.getText().isEmpty() || Integer.parseInt(amountField.getText()) != 0) {
-            printResult("Amount can't be %n0 or empty", "red");
+        if (amountField.getText().isEmpty() || Integer.parseInt(amountField.getText()) == 0) {
+            printResult("Amount can't be 0 or empty", "red");
+            amountField.setText("");
         }else {
             if (DataManager.sell(Integer.parseInt(amountField.getText()), currentData.getLatestOpen(), symbol)) {
                 printResult(String.format("Successfully sold %s at %,.2f ", amountField.getText(), currentData.getLatestOpen()), "green");

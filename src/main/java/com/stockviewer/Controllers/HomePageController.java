@@ -17,6 +17,7 @@ import javafx.scene.chart.XYChart;
 import javafx.scene.control.*;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyCode;
+import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
 import javafx.stage.Window;
@@ -32,6 +33,8 @@ import java.util.List;
 import java.util.Optional;
 
 public class HomePageController {
+    @FXML
+    private BorderPane borderPane;
     @FXML
     private ChoiceBox<String> rangeChoiceBox;
     @FXML
@@ -185,12 +188,12 @@ public class HomePageController {
         LocalDateTime earliest = LocalDate.now().minusDays(interval.equals(Interval.YTD) ? --minDay : interval.getRange()).atTime(9, 0);
         List<XYChart.Data<String, Number>> data = new ArrayList<>();
 
-        double starting = DataManager.getInitial() + orders.stream().mapToDouble(Order::getSignedValue).sum();
+        double starting = DataManager.getInitial() + orders.stream().filter(i->LocalDateTime.parse(i.getBuyDate(), DataManager.getDateTimeFormatter()).isBefore(earliest)).mapToDouble(Order::getSignedValue).sum();
 
         data.add(new XYChart.Data<>(DataManager.formatByInterval(earliest, interval), starting));
 
         for (int i = 0; i < orders.size(); i++) {
-            if (LocalDateTime.parse(orders.get(i).getBuyDate(), DataManager.getDateTimeFormatter()).isBefore(earliest)) {
+            if (LocalDateTime.parse(orders.get(i).getBuyDate(), DataManager.getDateTimeFormatter()).isAfter(earliest)) {
                 LocalDateTime time = LocalDateTime.parse(orders.get(i).getBuyDate(), DataManager.getDateTimeFormatter());
                 double current = DataManager.getInitial();
                 for (int j = 0; j < i; j++)
@@ -210,7 +213,7 @@ public class HomePageController {
             lineChart.getData().add(new XYChart.Series<>());
 
             XYChart.Series<String, Number> series = lineChart.getData().get(0);
-            data.forEach(i->series.getData().add(i));
+            data.forEach(i -> series.getData().add(i));
         }
     }
 
