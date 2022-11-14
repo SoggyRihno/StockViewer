@@ -18,12 +18,12 @@ import javafx.scene.chart.XYChart;
 import javafx.scene.control.*;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Text;
-
 import java.io.IOException;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -124,7 +124,9 @@ public class StockPageController {
         ses.shutdownNow();
         try {
             FXMLLoader loader = new FXMLLoader(StockViewer.class.getResource("Pages/HomePage.fxml"));
-            StockViewer.getStage().setScene(new Scene(loader.load()));
+            Scene scene = new Scene(loader.load());
+            scene.getStylesheets().add(StockViewer.class.getResource("Pages/Default.css").toExternalForm());
+            StockViewer.getStage().setScene(scene);
         } catch (IOException e) {
             DataManager.saveJson();
             System.exit(-1);
@@ -136,7 +138,7 @@ public class StockPageController {
         try {
             StockData stockData = interval.equals(Interval.ONE_DAY) ? currentData : StockData.newStockData(symbol, interval);
             long minDay = stockData.getData().stream().parallel().map(StockDataPoint::getLocalDateTime).mapToLong(i -> Duration.between(LocalDate.now().minusDays(1).atTime(9, 0), i).toDays()).max().orElse(0);
-            LocalDateTime marketOpen = LocalDate.now().minusDays(interval.equals(Interval.YTD) ? --minDay : interval.getRange()).atTime(9, 0);
+            LocalDateTime marketOpen = LocalDate.now().minusDays(interval.equals(Interval.YTD) ? --minDay : interval.getRange()).atTime(9, 0).plusDays(1);
 
             List<XYChart.Data<String, Number>> points = stockData.getData().stream()
                     .parallel()
@@ -175,7 +177,7 @@ public class StockPageController {
     }
 
     void buy() {
-        if (amountField.getText().isEmpty() || Integer.parseInt(amountField.getText()) == 0) {
+        if (amountField.getText().isEmpty() || Objects.equals(amountField.getText(), "0")) {
             printResult("Amount can't be 0 or empty", "red");
             amountField.setText("");
         } else {
@@ -188,7 +190,7 @@ public class StockPageController {
     }
 
     void sell() {
-        if (amountField.getText().isEmpty() || Integer.parseInt(amountField.getText()) == 0) {
+        if (amountField.getText().isEmpty() || Objects.equals(amountField.getText(), "0")) {
             printResult("Amount can't be 0 or empty", "red");
             amountField.setText("");
         }else {

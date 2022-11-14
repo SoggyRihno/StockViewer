@@ -21,7 +21,6 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
 import javafx.stage.Window;
-
 import java.io.File;
 import java.io.IOException;
 import java.time.Duration;
@@ -116,6 +115,7 @@ public class HomePageController {
         if (alert.getResult().equals(ButtonType.YES)) {
             DataManager.clear();
             updateChart();
+            updateList();
         }
     }
 
@@ -172,10 +172,7 @@ public class HomePageController {
     }
 
     void updateList() {
-        List<Order> orders = DataManager.getOrders();
-        if (!orders.isEmpty()) {
-            portfolioList.setItems(FXCollections.observableList(orders));
-        }
+        portfolioList.setItems(FXCollections.observableList(DataManager.getOrders()));
     }
 
     void updateChart() {
@@ -189,7 +186,6 @@ public class HomePageController {
         List<XYChart.Data<String, Number>> data = new ArrayList<>();
 
         double starting = DataManager.getInitial() + orders.stream().filter(i->LocalDateTime.parse(i.getBuyDate(), DataManager.getDateTimeFormatter()).isBefore(earliest)).mapToDouble(Order::getSignedValue).sum();
-
         data.add(new XYChart.Data<>(DataManager.formatByInterval(earliest, interval), starting));
 
         for (int i = 0; i < orders.size(); i++) {
@@ -203,7 +199,7 @@ public class HomePageController {
         }
         if (!data.isEmpty()) {
             data.add(new XYChart.Data<>(DataManager.formatByInterval(LocalDateTime.now(), interval), data.get(data.size() - 1).getYValue().doubleValue()));
-            List<Double> yRange = data.stream().parallel().map(XYChart.Data::getYValue).map(Number::doubleValue).sorted().toList();
+            List<Double> yRange = data.stream().parallel().map(XYChart.Data::getYValue).map(Number::doubleValue).distinct().sorted().toList();
             ((NumberAxis) lineChart.getYAxis()).setLowerBound(Math.floor(yRange.get(0)));
             ((NumberAxis) lineChart.getYAxis()).setUpperBound(Math.ceil(yRange.get(yRange.size() - 1)));
 

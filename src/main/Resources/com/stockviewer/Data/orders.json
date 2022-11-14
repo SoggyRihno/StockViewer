@@ -1,50 +1,42 @@
 [
   {
     "symbol": "k",
-    "amount": 55,
-    "price": 69.58,
-    "date": "2022-11-04 08:47:56",
+    "amount": 9,
+    "price": 0.0,
+    "date": "2022-11-14 08:42:10",
     "sold": false,
-    "uuid": "ab25db85-194a-4080-8444-f0e9f026d4b1"
-  },
-  {
-    "symbol": "k",
-    "amount": 55,
-    "price": 69.58,
-    "date": "2022-11-04 08:47:57",
-    "sold": false,
-    "uuid": "44227026-6422-49ea-b94e-9623258da941"
+    "uuid": "eef749ac-f0a3-4135-817d-a764ece07352"
   },
   {
     "symbol": "k",
     "amount": 9,
-    "price": 69.58,
-    "date": "2022-11-04 10:19:46",
+    "price": 0.0,
+    "date": "2022-11-14 08:42:11",
     "sold": false,
-    "uuid": "2ef93047-ed90-4050-8201-5287bdf88cb7"
+    "uuid": "c8eae563-e123-42b3-9d01-b1514cc7ae92"
   },
   {
     "symbol": "k",
     "amount": 9,
-    "price": 71.0,
-    "date": "2022-11-10 09:22:28",
-    "sold": true,
-    "uuid": "2855a110-e08e-46af-a951-5a10c2627030"
+    "price": 0.0,
+    "date": "2022-11-14 08:42:12",
+    "sold": false,
+    "uuid": "7f7e3399-f7d4-4f4c-9b47-13aa6843356f"
   },
   {
     "symbol": "k",
-    "amount": 55,
-    "price": 71.0,
-    "date": "2022-11-10 09:24:02",
-    "sold": true,
-    "uuid": "22dc7ce8-7334-4062-ad58-20ac431914a2"
+    "amount": 9,
+    "price": 0.0,
+    "date": "2022-11-14 08:42:12",
+    "sold": false,
+    "uuid": "1525e76f-9799-4b87-88bd-16728ae0de3f"
   },
   {
     "symbol": "k",
-    "amount": 55,
-    "price": 71.0,
-    "date": "2022-11-10 09:24:03",
-    "sold": true,
-    "uuid": "5c4c3d3c-aee8-41f7-a86b-9c18523e4df0"
+    "amount": 9,
+    "price": 0.0,
+    "date": "2022-11-14 08:42:12",
+    "sold": false,
+    "uuid": "ae889ff0-2418-4f97-a38c-1d094bae7374"
   }
 ]

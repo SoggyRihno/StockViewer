@@ -24,7 +24,7 @@ public class Order {
     }
 
     public double getSignedValue(){
-        return (sold ? -1 : 1) * amount * price;
+        return (sold ? 1 : -1) * amount * price;
     }
 
     public String getSymbol() {

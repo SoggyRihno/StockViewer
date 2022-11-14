@@ -40,10 +40,8 @@ public class DataManager {
     private static final List<Runnable> queue = new ArrayList<>();
     private static long rateLimitedUntil = 0;
     private static final Gson gson = new GsonBuilder().setPrettyPrinting().create();
-    private static final Type mapType = new TypeToken<Map<String, Object>>() {
-    }.getType();
-    private static final Type listType = new TypeToken<ArrayList<Order>>() {
-    }.getType();
+    private static final Type mapType = new TypeToken<Map<String, Object>>() {}.getType();
+    private static final Type listType = new TypeToken<ArrayList<Order>>() {}.getType();
     private static final DateTimeFormatter dateTimeFormatter = new DateTimeFormatterBuilder()
             .appendPattern("yyyy-MM-dd")
             .optionalStart()
@@ -113,16 +111,12 @@ public class DataManager {
         try (Reader reader = Files.newBufferedReader(DATA_PATH)) {
             Map<String, Object> data = gson.fromJson(reader, mapType);
             if (data != null) {
-                if (data.get("initial") != null) {
+                if (data.get("initial") != null)
                     initial = ((Double) data.getOrDefault("initial", 10_000)).doubleValue();
-                } else {
-                    initial = 10000;
-                }
-                if (data.get("API_KEY") != null && data.get("API_KEY") != "") {
+                if (data.get("API_KEY") != null && data.get("API_KEY") != "")
                     API_KEY = (String) data.getOrDefault("API_KEY", "");
-                } else {
+                else
                     StockViewer.forceApiKey();
-                }
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -131,19 +125,24 @@ public class DataManager {
             List<Order> fromJson = gson.fromJson(reader, listType);
             if (fromJson != null)
                 orders = fromJson;
-        } catch (IOException ignored) {
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 
     public static void importFile(Path path) throws IOException {
-        byte[] current = Files.readAllBytes(path);
-        Reader reader = Files.newBufferedReader(DATA_PATH);
-        List<Order> importedData = gson.fromJson(reader, listType);
-        if (importedData != null) {
-            orders = importedData;
-            saveJson();
-        } else
-            Files.write(path, current);
+        if (path.endsWith(".json")){
+            byte[] current = Files.readAllBytes(path);
+            Reader reader = Files.newBufferedReader(DATA_PATH);
+            List<Order> importedData = gson.fromJson(reader, listType);
+            if (importedData != null) {
+                orders = importedData;
+                saveJson();
+            } else
+                Files.write(path, current);
+        } else {
+            throw new IOException("Incorrect File Type : JSON Expected");
+        }
     }
 
     private static String getSync(String url) throws ExecutionException, InterruptedException {

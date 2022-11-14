@@ -2,14 +2,14 @@ package com.stockviewer.Functionality.wrappers;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import com.stockviewer.Functionality.DataManager;
-import com.stockviewer.Functionality.Interval;
 import com.stockviewer.Exceptions.API.APIException;
 import com.stockviewer.Exceptions.API.InvalidCallException;
 import com.stockviewer.Exceptions.API.InvalidKeyException;
+import com.stockviewer.Functionality.DataManager;
+import com.stockviewer.Functionality.Interval;
+
 import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
 
 public class StockData {
@@ -22,28 +22,39 @@ public class StockData {
     }
 
     public static StockData newStockData(String symbol, Interval interval) throws ExecutionException, InterruptedException, APIException {
-        final LocalDateTime currentTime = LocalDateTime.now().minusDays(1).minusDays(interval.getRange());
-        String raw = DataManager.getStockData(symbol,interval).get();
+        LocalDateTime time = LocalDateTime.now().minusDays(1).minusDays(interval.getRange());
+        final LocalDateTime startTime = time.minusDays(time.getDayOfWeek().getValue() > 5 ? Math.abs(5 - time.getDayOfWeek().getValue()) : 0);
+
+        String raw = DataManager.getStockData(symbol, interval).get();
         JsonObject json = JsonParser.parseString(raw).getAsJsonObject();
 
-        if(json.keySet().contains("Error Message")){
+        if (json.keySet().contains("Error Message")) {
             String result = json.get("Error Message").getAsString();
-            if(result.contains("apikey is invalid or missing"))
+            if (result.contains("apikey is invalid or missing"))
                 throw new InvalidKeyException(result);
             else if (result.contains("Invalid API call"))
                 throw new InvalidCallException(result);
         }
         String key = json.keySet().stream().filter(i -> !i.equals("Meta Data")).findFirst().orElse(null);
-        if(key == null)
+        if (key == null)
             throw new APIException();
 
         JsonObject data = json.get(key).getAsJsonObject();
+        List<StockDataPoint> points = new ArrayList<>();
+        for (String s : data.keySet())
+            if (startTime.isBefore(LocalDateTime.parse(s, DataManager.getDateTimeFormatter())))
+                points.add(new StockDataPoint(s, data.get(s).getAsJsonObject()));
+        Collections.sort(points);
+        return new StockData(symbol, points);
+        /*
+
         return new StockData(symbol,
                 data.keySet().stream()
-                .map(i -> new StockDataPoint(i, data.get(i).getAsJsonObject()))
-                .filter(i -> i.getLocalDateTime().isAfter(currentTime))
-                .sorted(StockDataPoint::compareTo)
-                .toList());
+                        .map(i -> new StockDataPoint(i, data.get(i).getAsJsonObject()))
+                        .filter(i -> i.getLocalDateTime().isAfter(startTime))
+                        .sorted(StockDataPoint::compareTo)
+                        .toList());
+         */
     }
 
     public static StockData newStockData(String symbol) throws APIException, ExecutionException, InterruptedException {
@@ -76,6 +87,8 @@ public class StockData {
     }
 
     public String getLatestChange() {
+        if (data.isEmpty())
+            return "";
         double difference = data.get(data.size() - 1).getOpen() - data.get(data.size() - 2).getOpen();
         return String.format("%s (%.2f %%)",
                 difference >= 0 ? String.format("+ %,.2f", difference) : String.format("%,.2f", difference),
@@ -94,7 +107,7 @@ public class StockData {
     public boolean equals(Object obj) {
         if (this == obj)
             return true;
-        if(obj instanceof StockData sd)
+        if (obj instanceof StockData sd)
             return Objects.equals(sd.getSymbol(), symbol) && data.equals(sd.getData());
         return false;
     }
