@@ -124,9 +124,7 @@ public class StockPageController {
         ses.shutdownNow();
         try {
             FXMLLoader loader = new FXMLLoader(StockViewer.class.getResource("Pages/HomePage.fxml"));
-            Scene scene = new Scene(loader.load());
-            scene.getStylesheets().add(StockViewer.class.getResource("Pages/Default.css").toExternalForm());
-            StockViewer.getStage().setScene(scene);
+            StockViewer.getStage().setScene(new Scene(loader.load()));
         } catch (IOException e) {
             DataManager.saveJson();
             System.exit(-1);

@@ -1,0 +1,67 @@
+.menu {
+    -fx-insets-width : 0;
+    -fx-padding-width :0;
+    -fx-text-alignment : center;
+}
+.list-view, .split-pane {
+    -fx-background-insets: 0;
+}
+.axis{
+    -fx-tick-label-fill : white;
+}
+.choice-box {
+    -fx-border-width : 1 1 1 1;
+    -fx-border-color : #9e9e9e;
+}
+.popup{
+    -fx-background-color: #808080;
+    -fx-background-radius : 3;
+}
+
+.list-cell:filled:hover{
+    -fx-background-color: #9e9e9e;
+    -fx-text-fill: black;
+    -fx-background-insets : 0 2 0 4;
+    -fx-background-radius : 3;
+}
+
+.light-right {
+    -fx-background-color : -fx-color-light;
+    -fx-background-insets : 4 4 4 2;
+    -fx-background-radius : 1;
+}
+
+.light-thin-right{
+    -fx-background-color : -fx-color-light;
+    -fx-background-insets : 0 4 0 2;
+    -fx-background-radius : 3;
+}
+
+.light-left {
+    -fx-background-color : -fx-color-light;
+    -fx-background-insets : 4 2 4 4;
+    -fx-background-radius : 3;
+    }
+
+.light-thin-left{
+    -fx-background-color : -fx-color-light;
+    -fx-background-insets : 0 2 0 4;
+    -fx-background-radius : 3;
+}
+.light-center {
+    -fx-background-color : -fx-color-light;
+    -fx-background-insets : 0 2 0 2;
+    -fx-background-radius : 3;
+}
+.dark {
+    -fx-background-color : -fx-color-dark;
+    -fx-background-insets : 2 4 4 4;
+    -fx-background-radius : 2;
+    -fx-padding-width :4 0 0 0;
+}
+
+.search{
+    -fx-background-color : -fx-color-light;
+    -fx-background-insets : 0 2 0 2;
+    -fx-background-radius : 3;
+}

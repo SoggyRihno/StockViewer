@@ -26,10 +26,7 @@ import java.io.IOException;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 public class HomePageController {
     @FXML
@@ -102,7 +99,7 @@ public class HomePageController {
                 if (empty || order == null)
                     setText(null);
                 else
-                    setText(String.format("%s\t%d\t%,.2f\t%s", order.getSymbol(), order.getAmount(), order.getBuyPrice(), order.isSold() ? "SOLD" : ""));
+                    setText(String.format("%s\t%d\t$%,.2f\t%s", order.getSymbol().toUpperCase(), order.getAmount(), order.getBuyPrice(), order.isSold() ? "SOLD" : ""));
             }
         });
         updateList();

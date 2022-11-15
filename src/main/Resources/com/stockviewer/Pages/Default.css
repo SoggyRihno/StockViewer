@@ -1,33 +1,14 @@
 {
    -fx-text-fill: white;
-   -fx-opacity : 70;
-   -fx-border-radius : 0;
-   -fx-background-opacity : 0.4;
-} .root {
+   -fx-background-color : transparent;
+   -fx-color-light : #b2b2b250;
+   -fx-color-dark : #5b5b5bBB;
+   -fx-color-border-light : #797979FF;
+}
+.root {
     -fx-background-color:  linear-gradient(from 0.0% 0.0% to 100.0% 91.0%, #b23836ff 0.0%, #b23836ff 0.662%, #2b77c3ff 100.0%)
 }
-.menu {
-    -fx-border-width : 0 1 0 0;
-    -fx-border-color : #9e9e9e;
-    -fx-insets-width : 0;
-    -fx-padding-width :0;
-}
-.list-view, .split-pane {
-    -fx-background-insets: 0;
 
-}
-.axis{
-    -fx-tick-label-fill : white;
-}
-.choice-box {
-    -fx-border-width : 0 1 1 1;
-    -fx-border-color : #9e9e9e;
-}
-.popup{
-    -fx-background-color: #808080;
-    -fx-border-width : 1 1 1 1;
-    -fx-border-color : #9e9e9e;
-} .button:hover, .list-cell:filled:hover, .menu:hover  {
-    -fx-background-color:#9e9e9e;
-    -fx-text-fill: black;
-}
+
+
+

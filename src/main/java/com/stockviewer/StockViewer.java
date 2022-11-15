@@ -9,7 +9,6 @@ import javafx.scene.control.TextInputDialog;
 import javafx.stage.Stage;
 
 import java.io.IOException;
-import java.util.Objects;
 import java.util.Optional;
 
 public class StockViewer extends Application {
@@ -24,7 +23,6 @@ public class StockViewer extends Application {
         STAGE = stage;
         FXMLLoader fxmlLoader = new FXMLLoader(StockViewer.class.getResource("Pages/HomePage.fxml"));
         Scene scene = new Scene(fxmlLoader.load(), 600, 500);
-        scene.getStylesheets().add(Objects.requireNonNull(getClass().getResource("Pages/Default.css")).toExternalForm());
         stage.setTitle("Stock Viewer");
         stage.setScene(scene);
         stage.setResizable(false);
