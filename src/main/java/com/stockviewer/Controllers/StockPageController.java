@@ -99,8 +99,8 @@ public class StockPageController {
         try {
             loadData();
             Platform.runLater(() -> {
-                openLabel.setText(String.valueOf(currentData.getLatestOpen()));
-                volumeLabel.setText(String.valueOf(currentData.getDailyVolume(LocalDateTime.now().minusDays(1))));
+                openLabel.setText(String.format("Open : %s",currentData.getLatestOpen()));
+                volumeLabel.setText(String.format("Volume : %s",currentData.getDailyVolume(LocalDateTime.now().minusDays(1))));
                 changeLabel.setText(currentData.getLatestChange());
                 dateLabel.setText(currentData.getLatestTimeFormatted());
                 changeLabel.setStyle(changeLabel.getText().contains("-") ? "-fx-text-fill: red" : "-fx-text-fill: green");

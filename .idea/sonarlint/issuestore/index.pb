@@ -17,3 +17,9 @@ m
 =.idea/libraries/Maven__org_openjfx_javafx_graphics_win_19.xml,6\b\6b8747c9352ab17bd99073f20e474c5882d81dfa
 i
 9src/main/java/com/stockviewer/Functionality/Interval.java,2\a\2a654ec32b49d59f252e087b61b8af4dda22fda8
+f
+6src/main/java/com/stockviewer/Functionality/Order.java,c\2\c2f30ff0a0681953510d7ea4ef6de419086cba5f
+l
+<src/main/java/com/stockviewer/Functionality/DataManager.java,a\b\abb8b5a5450aea98e59bc7001355337320d35492
+s
+Csrc/main/java/com/stockviewer/Functionality/wrappers/StockData.java,e\d\ed43b6f2c244eeac048f858c45d5d0c566e0d165
