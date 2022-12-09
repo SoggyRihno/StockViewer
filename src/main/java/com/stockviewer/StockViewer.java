@@ -4,7 +4,7 @@ import com.stockviewer.Functionality.DataManager;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
-import javafx.scene.control.Button;
+import javafx.scene.control.Alert;
 import javafx.scene.control.TextInputDialog;
 import javafx.stage.Stage;
 
@@ -32,24 +32,21 @@ public class StockViewer extends Application {
     public static void main(String[] args) {
         launch();
     }
-
     @Override
     public void stop() {
         DataManager.stop();
     }
-
     public static void forceApiKey() {
         TextInputDialog dialog = new TextInputDialog();
         dialog.setGraphic(null);
         dialog.setHeaderText("Set API Key");
         dialog.setTitle("Set API Key");
-        Button button = new Button("Set");
-        button.setOnAction(actionEvent -> dialog.close());
         Optional<String> result = dialog.showAndWait();
-
-        if (result.isPresent() && result.get().matches("")) {
+        if (result.isPresent() && result.get().matches("[A-Z0-9]{16}")) {
             DataManager.setAPIKey(result.get());
         }else {
+            Alert fail = new Alert(Alert.AlertType.ERROR, "Api key was empty or invalid");
+            fail.showAndWait();
             forceApiKey();
         }
     }

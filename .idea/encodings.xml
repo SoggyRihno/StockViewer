@@ -3,6 +3,10 @@
   <component name="Encoding">
     <file url="file://$PROJECT_DIR$/src/main/Resources" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/src/main/java/com/stockviewer" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/src/main/java/com/test/xml" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/../StockViewersrc/main/Resources/com/stockviewer/Data" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/../StockViewersrc/main/Resources/com/stockviewer/Pages" charset="UTF-8" />
     <file url="PROJECT" charset="UTF-8" />
   </component>
 </project>

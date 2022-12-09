@@ -21,12 +21,16 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
 import javafx.stage.Window;
+
 import java.io.File;
 import java.io.IOException;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Optional;
 
 public class HomePageController {
     @FXML
@@ -61,6 +65,10 @@ public class HomePageController {
 
     @FXML
     public void initialize() {
+        if (!DataManager.hasApiKey()){
+            StockViewer.forceApiKey();
+        }
+
         CategoryAxis xAxis = new CategoryAxis();
         xAxis.setLabel("Date");
         xAxis.setGapStartAndEnd(false);
@@ -146,7 +154,7 @@ public class HomePageController {
             return;
         try {
             FXMLLoader loader = new FXMLLoader(StockViewer.class.getResource("Pages/StockPage.fxml"));
-            loader.setController(new StockPageController(symbol));
+            loader.setController(new com.stockviewer.Controllers.StockPageController(symbol));
             StockViewer.getStage().setScene(new Scene(loader.load()));
         } catch (IOException e) {
             e.printStackTrace();

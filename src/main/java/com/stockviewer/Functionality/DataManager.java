@@ -5,9 +5,7 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 import com.stockviewer.StockViewer;
 
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.Reader;
+import java.io.*;
 import java.lang.reflect.Type;
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -20,28 +18,27 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeFormatterBuilder;
 import java.time.temporal.ChronoField;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class DataManager {
     private static final String URL_FORMAT_STRING = "https://www.alphavantage.co/query?apikey=%s&datatype=json&symbol=%s%s";
-    private static final Path ORDER_PATH = Path.of("src/main/resources/com/stockviewer/Data/orders.json");
-    private static final Path DATA_PATH = Path.of("src/main/resources/com/stockviewer/Data/data.json");
+    private static final String ORDER_PATH = "Data/orders.json";
+    private static final String DATA_PATH = "Data/data.json";
     private static String API_KEY = "";
     private static double initial = 10000;
-    private static List<Order> orders = new ArrayList<>();
+    private static List<com.stockviewer.Functionality.Order> orders = new ArrayList<>();
     private static Map<String, String> cache = new HashMap<>();
     private static final ScheduledExecutorService ses = Executors.newScheduledThreadPool(3);
     private static final List<Runnable> queue = new ArrayList<>();
     private static long rateLimitedUntil = 0;
     private static final Gson gson = new GsonBuilder().setPrettyPrinting().create();
-    private static final Type mapType = new TypeToken<Map<String, Object>>() {}.getType();
-    private static final Type listType = new TypeToken<ArrayList<Order>>() {}.getType();
+    private static final Type mapType = new TypeToken<Map<String, Object>>() {
+    }.getType();
+    private static final Type listType = new TypeToken<ArrayList<com.stockviewer.Functionality.Order>>() {
+    }.getType();
     private static final DateTimeFormatter dateTimeFormatter = new DateTimeFormatterBuilder()
             .appendPattern("yyyy-MM-dd")
             .optionalStart()
@@ -70,6 +67,11 @@ public class DataManager {
         saveJson();
     }
 
+    public static boolean hasApiKey() {
+        return !Objects.equals(API_KEY, "");
+
+    }
+
     public static void clear() {
         orders = new ArrayList<>();
         saveJson();
@@ -85,7 +87,7 @@ public class DataManager {
         ses.shutdown();
     }
 
-    public static List<Order> getOrders() {
+    public static List<com.stockviewer.Functionality.Order> getOrders() {
         return List.copyOf(orders);
     }
 
@@ -94,21 +96,23 @@ public class DataManager {
     }
 
     public static void saveJson() {
-        try (FileWriter fw = new FileWriter(DATA_PATH.toFile())) {
+        try (FileWriter fw = new FileWriter(StockViewer.class.getResource(DATA_PATH).getPath())){
             Map<String, Object> data = Map.ofEntries(Map.entry("initial", initial), Map.entry("API_KEY", API_KEY));
             gson.toJson(data, mapType, fw);
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            e.printStackTrace();
         }
-        try (FileWriter fw = new FileWriter(ORDER_PATH.toFile())) {
+
+        try (FileWriter fw = new FileWriter(StockViewer.class.getResource(ORDER_PATH).getPath())){
             gson.toJson(orders, listType, fw);
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            e.printStackTrace();
         }
     }
 
     public static void loadJson() {
-        try (Reader reader = Files.newBufferedReader(DATA_PATH)) {
+        try (InputStream in = StockViewer.class.getResourceAsStream(DATA_PATH);
+             Reader reader = new BufferedReader(new InputStreamReader(in))) {
             Map<String, Object> data = gson.fromJson(reader, mapType);
             if (data != null) {
                 if (data.get("initial") != null)
@@ -121,20 +125,22 @@ public class DataManager {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        try (Reader reader = Files.newBufferedReader(ORDER_PATH)) {
-            List<Order> fromJson = gson.fromJson(reader, listType);
+        try (InputStream in = StockViewer.class.getResourceAsStream(ORDER_PATH);
+             Reader reader = new BufferedReader(new InputStreamReader(in))) {
+            List<com.stockviewer.Functionality.Order> fromJson = gson.fromJson(reader, listType);
             if (fromJson != null)
                 orders = fromJson;
+
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
     public static void importFile(Path path) throws IOException {
-        if (path.endsWith(".json")){
-            byte[] current = Files.readAllBytes(path);
-            Reader reader = Files.newBufferedReader(DATA_PATH);
-            List<Order> importedData = gson.fromJson(reader, listType);
+        if (path.endsWith(".json")) {
+            byte[] current = Files.readAllBytes(Path.of(StockViewer.class.getResource(ORDER_PATH).getPath()));
+            Reader reader = Files.newBufferedReader(path);
+            List<com.stockviewer.Functionality.Order> importedData = gson.fromJson(reader, listType);
             if (importedData != null) {
                 orders = importedData;
                 saveJson();
@@ -151,7 +157,7 @@ public class DataManager {
         return client.sendAsync(request, HttpResponse.BodyHandlers.ofString()).get().body();
     }
 
-    public static CompletableFuture<String> getStockData(String symbol, Interval interval) {
+    public static CompletableFuture<String> getStockData(String symbol, com.stockviewer.Functionality.Interval interval) {
         CompletableFuture<String> result = new CompletableFuture<>();
         String url = String.format(URL_FORMAT_STRING, API_KEY, symbol, interval.getApiValue());
         if (cache.containsKey(url))
@@ -180,12 +186,12 @@ public class DataManager {
     }
 
     public static double calculateCurrent() {
-        return initial + orders.stream().mapToDouble(Order::getSignedValue).sum();
+        return initial + orders.stream().mapToDouble(com.stockviewer.Functionality.Order::getSignedValue).sum();
     }
 
     public static int getOwned(String symbol) {
         int owned = 0;
-        for (Order order : orders)
+        for (com.stockviewer.Functionality.Order order : orders)
             if (order.getSymbol().equals(symbol))
                 owned += (order.isSold() ? -1 : 1) * order.getAmount();
         return owned;
@@ -193,21 +199,21 @@ public class DataManager {
 
     public static boolean buy(int amount, double buyPrice, String symbol) {
         if (amount * buyPrice <= calculateCurrent())
-            return orders.add(new Order(amount, buyPrice, symbol));
+            return orders.add(new com.stockviewer.Functionality.Order(amount, buyPrice, symbol));
         return false;
     }
 
     public static boolean sell(int amount, double buyPrice, String symbol) {
         if (amount <= getOwned(symbol))
-            return orders.add(new Order(amount, buyPrice, symbol, true));
+            return orders.add(new com.stockviewer.Functionality.Order(amount, buyPrice, symbol, true));
         return false;
     }
 
-    public static String formatByInterval(LocalDateTime time, Interval interval) {
+    public static String formatByInterval(LocalDateTime time, com.stockviewer.Functionality.Interval interval) {
         return switch (interval) {
             case ONE_DAY -> time.format(DateTimeFormatter.ofPattern("HH:mm"));
             case YTD -> time.format(DateTimeFormatter.ofPattern("MMM/dd/yyyy"));
-            default ->  time.format(DateTimeFormatter.ofPattern("MMM/dd HH:mm"));
+            default -> time.format(DateTimeFormatter.ofPattern("MMM/dd HH:mm"));
         };
     }
 }

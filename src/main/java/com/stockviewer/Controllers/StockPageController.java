@@ -121,7 +121,7 @@ public class StockPageController {
     }
 
     void back() {
-        ses.shutdownNow();
+        ses.shutdown();
         try {
             FXMLLoader loader = new FXMLLoader(StockViewer.class.getResource("Pages/HomePage.fxml"));
             StockViewer.getStage().setScene(new Scene(loader.load()));
